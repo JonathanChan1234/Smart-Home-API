@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "3wdX4Tr7/9/xsi8gR4CTcPaBtJwzPs8KsqbjnBGyWAI=",
+  "Source": "smart_home_server",
+  "BasePath": "_content/smart_home_server",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

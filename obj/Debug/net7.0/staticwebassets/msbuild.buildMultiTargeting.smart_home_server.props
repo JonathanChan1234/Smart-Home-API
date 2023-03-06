@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\smart_home_server.props" />
+</Project>
