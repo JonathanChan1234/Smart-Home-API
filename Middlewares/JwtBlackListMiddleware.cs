@@ -14,14 +14,12 @@ public class JwtBlackListMiddleware
     public async Task InvokeAsync(HttpContext httpContext, IJwtService jwtService, AppDbContext context)
     {
         var jti = httpContext.User.Claims.FirstOrDefault(c => c.Type == "jti")?.Value;
-        System.Console.WriteLine($"jti: {jti}");
         if (jti == null)
         {
             await HandleInvalidToken(httpContext, "invalid jti");
             return;
         }
         var jwtInBlackList = await jwtService.CheckIfJwtInBlackList(jti);
-        System.Console.WriteLine($"jtiInBlackList: {jwtInBlackList}");
         if (jwtInBlackList)
         {
             await HandleInvalidToken(httpContext, "invalid jwt");

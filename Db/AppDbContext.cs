@@ -2,6 +2,7 @@ using smart_home_server.Auth.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using smart_home_server.Home.Models;
+using smart_home_server.Devices.Models;
 
 namespace smart_home_server.Db;
 
@@ -12,6 +13,9 @@ public class AppDbContext : IdentityUserContext<ApplicationUser>
     public DbSet<Room> Rooms { get; set; } = null!;
     public DbSet<JwtBlackList> JwtBlackList { get; set; } = null!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+    public DbSet<Device> Devices { get; set; } = null!;
+    public DbSet<Light> Lights { get; set; } = null!;
+    public DbSet<Shade> Shades { get; set; } = null!;
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -76,5 +80,16 @@ public class AppDbContext : IdentityUserContext<ApplicationUser>
             .WithMany(floor => floor.Rooms)
             .IsRequired();
         builder.Entity<Room>().Property(r => r.IsFavorite).HasDefaultValue(false);
+
+        // One-to-many (Room to Device)
+        builder.Entity<Device>().HasIndex(device => new { device.RoomId, device.Name }).IsUnique();
+        builder.Entity<Device>()
+            .HasOne(device => device.Room)
+            .WithMany(room => room.Devices)
+            .IsRequired();
+        builder.Entity<Room>()
+            .HasMany(room => room.Devices)
+            .WithOne(device => device.Room)
+            .IsRequired();
     }
 }

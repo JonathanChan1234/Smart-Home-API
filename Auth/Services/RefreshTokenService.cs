@@ -74,7 +74,7 @@ public class RefreshTokenService : IRefreshTokenService
             IsRevoked = false,
             UserId = userId,
             AddedDate = DateTime.UtcNow,
-            ExpiryDate = DateTime.UtcNow.AddMinutes(10),
+            ExpiryDate = DateTime.UtcNow.AddMonths(6),
             Token = Guid.NewGuid() + StringUtils.RandomString(25)
         };
         await _context.RefreshTokens.AddAsync(refreshToken);

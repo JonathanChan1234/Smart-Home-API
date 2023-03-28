@@ -12,6 +12,7 @@ public interface IRoomService
     Task DeleteRoom(string userId, string homeId, string floorId, string roomId);
     Task<List<Room>> GetFloorRooms(string userId, string homeId, string floorId, SearchOptionsQuery options);
     Task<Room?> GetRoomById(string floorId, string roomId);
+    Task<bool> CheckIfRoomBelongToOwner(string userId, string roomId);
     Task UpdateRoom(string userId, string homeId, string floorId, string roomId, string? name, bool? isFavorite);
 }
 
@@ -39,6 +40,35 @@ class RoomService : IRoomService
         var floor = await _floorService.GetFloorById(homeId, floorId);
         if (floor == null) throw new ModelNotFoundException();
         return floor;
+    }
+
+    public async Task<bool> CheckIfRoomBelongToOwner(string userId, string roomId)
+    {
+        var roomQuery = from r in _context.Rooms
+                        join f in _context.Floors on r.FloorId equals f.Id
+                        join h in _context.Homes on f.HomeId equals h.Id
+                        join u in _context.Users on h.OwnerId equals u.Id
+                        where u.Id == userId
+                        where r.Id == new Guid(roomId)
+                        select r;
+        var room = await roomQuery.FirstOrDefaultAsync();
+        return room != null;
+    }
+
+    public async Task<bool> CheckIfRoomBelongToInstaller(string userId, string roomId)
+    {
+        var roomQuery = from r in _context.Rooms
+                        join f in _context.Floors on r.FloorId equals f.Id
+                        join h in _context.Homes on f.HomeId equals h.Id
+                        join u in _context.Users on h.OwnerId equals u.Id
+                        where (from installer in h.Installers
+                               where u.Id == userId
+                               select installer
+                        ).Any() == true
+                        where r.Id == new Guid(roomId)
+                        select r;
+        var room = await roomQuery.FirstOrDefaultAsync();
+        return room != null;
     }
 
     public async Task<Room?> GetRoomById(string floorId, string roomId)
@@ -78,7 +108,7 @@ class RoomService : IRoomService
         var floor = await CheckFloorPermission(userId, homeId, floorId);
 
         var searchRoom = await _context.Rooms.Where(r => r.FloorId.ToString() == floorId && r.Name == name).FirstOrDefaultAsync();
-        if (searchRoom != null) throw new BadRequestException("Room name already exists in the same home");
+        if (searchRoom != null && searchRoom.Id.ToString() != roomId) throw new BadRequestException("Room name already exists in the same home");
         var room = await GetRoomById(floorId, roomId);
         if (room == null) throw new ModelNotFoundException();
         if (name != null) room.Name = name;

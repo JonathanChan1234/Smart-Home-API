@@ -9,6 +9,8 @@ using smart_home_server.Auth.Services;
 using smart_home_server.Home.Services;
 using smart_home_server.Exceptions;
 using smart_home_server.Middleware;
+using smart_home_server.Devices.Services;
+using smart_home_server.Devices.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +56,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IFloorService, FloorService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IDeviceService, DeviceService>();
+builder.Services.AddScoped<ILightService, LightService>();
+builder.Services.AddScoped<IShadeService, ShadeService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -70,7 +75,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     // app.UseHttpsRedirection();
 }
-
 
 app.UseAuthentication();
 app.UseAuthorization();

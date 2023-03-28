@@ -24,17 +24,22 @@ public class SmartHome
     [JsonIgnore]
     public ApplicationUser Owner { get; set; } = null!;
 
+    [JsonIgnore]
     [Required]
     public String InstallerPassword { get; set; } = null!;
 
+    [JsonIgnore]
     [Required]
     public String UserPassword { get; set; } = null!;
 
     public String Description { get; set; } = null!;
 
+    [JsonIgnore]
     public IList<Floor> Floors { get; set; } = null!;
 
+    [JsonIgnore]
     public IList<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
 
+    [JsonIgnore]
     public IList<ApplicationUser> Installers { get; set; } = new List<ApplicationUser>();
 }

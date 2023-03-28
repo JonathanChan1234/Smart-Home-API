@@ -41,12 +41,12 @@ public class JwtService : IJwtService
             // 3. Check if the accessToken expires or not
             var exp = jwtSecurityToken?.Payload.Exp;
             if (exp == null) throw new BadRequestException("Missing expire time");
-            if (DateUtils.UnixTimeStampToDateTime((double)exp) < DateTime.UtcNow)
+            if (DateUtils.UnixTimeStampToDateTime((double)exp) > DateTime.UtcNow.AddHours(8))
                 throw new BadRequestException("Access token not expired");
 
             return jwtSecurityToken;
         }
-        catch (Exception)
+        catch
         {
             throw new BadRequestException("Invalid JWT");
         }

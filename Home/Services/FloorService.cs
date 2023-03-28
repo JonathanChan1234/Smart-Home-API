@@ -42,7 +42,7 @@ public class FloorService : IFloorService
         var recordPerPage = options.RecordPerPage ?? 10;
         var query = _context.Floors.Where(f => f.HomeId.ToString() == homeId);
         if (options.Name != null) query = query.Where(f => f.Name == options.Name);
-        var floors = await query.OrderBy(f => f.Id).Skip((page - 1) * recordPerPage).Take(recordPerPage).ToListAsync();
+        var floors = await query.OrderBy(f => f.Id).Skip((page - 1) * recordPerPage).Take(recordPerPage).Include(f => f.Rooms).ToListAsync();
         return floors;
     }
 
