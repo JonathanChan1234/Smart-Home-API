@@ -7,10 +7,12 @@ namespace smart_home_server.Devices.Services;
 
 public interface ILightService
 {
+    Task<Light?> FindLightInHome(string homeId, string deviceId);
+    Task<Light?> FindLightInRoom(string roomId, string deviceId);
     Task<Light> CreateLight(string roomId, string name, bool dimmable);
     Task DeleteLight(string roomId, string deviceId);
     Task<List<Light>> GetRoomLights(string roomId);
-    Task<Light> UpdateLightStatus(string roomId, string deviceId, int level);
+    Task<Light> UpdateLightStatusInHome(string homeId, string deviceId, int level, DateTime time);
     Task<Light> UpdateLightProperty(string roomId, string deviceId, string name, bool dimmable);
 }
 
@@ -23,10 +25,23 @@ public class LightService : ILightService
         _context = context;
     }
 
-    private async Task<Light?> FindLightById(string roomId, string deviceId)
+    public async Task<Light?> FindLightInHome(string homeId, string deviceId)
+    {
+        var lightQuery = from l in _context.Lights
+                         join r in _context.Rooms on l.RoomId equals r.Id
+                         join f in _context.Floors on r.FloorId equals f.Id
+                         join h in _context.Homes on f.HomeId equals h.Id
+                         where l.Id.ToString() == deviceId
+                         where h.Id.ToString() == homeId
+                         select l;
+        var light = await lightQuery.FirstOrDefaultAsync();
+        return light;
+    }
+
+    public async Task<Light?> FindLightInRoom(string roomId, string deviceId)
     {
         var light = await _context.Lights
-            .Where(light => light.Id == new Guid(deviceId) && light.RoomId.ToString() == roomId)
+            .Where(light => light.Id.ToString() == deviceId && light.RoomId.ToString() == roomId)
             .FirstOrDefaultAsync();
         return light;
     }
@@ -42,7 +57,7 @@ public class LightService : ILightService
     public async Task<List<Light>> GetRoomLights(string roomId)
     {
         var lights = await _context.Lights
-            .Where(l => l.RoomId == new Guid(roomId))
+            .Where(l => l.RoomId.ToString() == roomId)
             .ToListAsync();
         return lights;
     }
@@ -73,7 +88,7 @@ public class LightService : ILightService
     )
     {
         // Check if the light with the same name exists
-        var light = await FindLightById(roomId, deviceId);
+        var light = await FindLightInRoom(roomId, deviceId);
         if (light == null) throw new ModelNotFoundException($"Light (id: {deviceId}) cannot be found");
 
         var lightWithSameName = await FindLightByName(roomId, name);
@@ -85,18 +100,21 @@ public class LightService : ILightService
         return light;
     }
 
-    public async Task<Light> UpdateLightStatus(
-        string roomId,
+    public async Task<Light> UpdateLightStatusInHome(
+        string homeId,
         string deviceId,
-        int level
+        int level,
+        DateTime time
     )
     {
         // Check if the light with the same name exists
-        var light = await FindLightById(roomId, deviceId);
+        var light = await FindLightInHome(homeId, deviceId);
         if (light == null) throw new ModelNotFoundException($"Light {deviceId} cannot be found");
 
+        if (time < light.StatusLastUpdatedAt) throw new BadRequestException($"Status not up to date");
+
         light.Level = level;
-        light.StatusLastUpdatedAt = DateTime.Now;
+        light.StatusLastUpdatedAt = time;
         await _context.SaveChangesAsync();
         return light;
     }
@@ -107,7 +125,7 @@ public class LightService : ILightService
     )
     {
         // Check if the light with the same name exists
-        var light = await FindLightById(roomId, deviceId);
+        var light = await FindLightInRoom(roomId, deviceId);
         if (light == null) throw new ModelNotFoundException($"Light {deviceId} cannot be found");
 
         _context.Lights.Remove(light);

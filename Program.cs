@@ -10,9 +10,22 @@ using smart_home_server.Home.Services;
 using smart_home_server.Exceptions;
 using smart_home_server.Middleware;
 using smart_home_server.Devices.Services;
-using smart_home_server.Devices.Filters;
+using MQTTnet.AspNetCore;
+using MQTTnet.AspNetCore.Routing;
+using System.Text.Json;
+using smart_home_server.Mqtt.Authentication;
+using smart_home_server.Mqtt.Client.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.UseKestrel(
+    o =>
+    {
+        o.ListenAnyIP(5181);
+        o.ListenAnyIP(1883, l => l.UseMqtt());
+        o.ListenAnyIP(7025, l => l.UseHttps());
+    }
+);
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
@@ -24,9 +37,9 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     options.Password.RequiredLength = 8;
 }).AddEntityFrameworkStores<AppDbContext>();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
@@ -59,6 +72,7 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<IDeviceService, DeviceService>();
 builder.Services.AddScoped<ILightService, LightService>();
 builder.Services.AddScoped<IShadeService, ShadeService>();
+builder.Services.AddScoped<IMqttClientService, MqttClientService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -66,8 +80,21 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddMqttControllers();
+builder.Services.AddMqttDefaultJsonOptions(new JsonSerializerOptions(JsonSerializerDefaults.Web));
+builder.Services.AddMqttAuthentication();
+
+builder.Services
+    .AddHostedMqttServerWithServices(mqttServer =>
+    {
+        mqttServer.WithoutDefaultEndpoint();
+    })
+    .AddMqttConnectionHandler()
+    .AddConnections();
+
 var app = builder.Build();
 
+app.UseRouting();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -86,5 +113,18 @@ app.UseWhen(httpContext =>
 
 app.MapControllers();
 app.UseExceptionHandler(ExceptionHandler.Handler());
+
+app.MapConnectionHandler<MqttConnectionHandler>(
+    "/mqtt",
+    httpConenctionDispatcherOptions => httpConenctionDispatcherOptions.WebSockets.SubProtocolSelector =
+        protocolList => protocolList.FirstOrDefault() ?? String.Empty);
+app.UseMqttServer(server =>
+{
+    var contextOptions = new DbContextOptionsBuilder<AppDbContext>()
+        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+        .Options;
+    server.WithAuthentication(app.Services);
+    server.WithAttributeRouting(app.Services, allowUnmatchedRoutes: false);
+});
 
 app.Run();

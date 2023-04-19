@@ -8,6 +8,8 @@
     ".NETCoreApp,Version=v7.0": {
       "smart_home_server/1.0.0": {
         "dependencies": {
+          "MQTTnet.AspNetCore": "4.1.4.563",
+          "MQTTnet.AspNetCore.Routing": "0.4.16",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "7.0.2",
           "Microsoft.AspNetCore.Identity": "2.2.0",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "7.0.2",
@@ -15,7 +17,8 @@
           "Microsoft.EntityFrameworkCore.Design": "7.0.2",
           "Microsoft.EntityFrameworkCore.Relational": "7.0.2",
           "Pomelo.EntityFrameworkCore.MySql": "7.0.0",
-          "Swashbuckle.AspNetCore": "6.2.3"
+          "Swashbuckle.AspNetCore": "6.2.3",
+          "MQTTnet": "4.1.4.563"
         },
         "runtime": {
           "smart_home_server.dll": {}
@@ -407,6 +410,37 @@
           "lib/netstandard2.0/Mono.TextTemplating.dll": {
             "assemblyVersion": "2.2.0.0",
             "fileVersion": "2.2.1.1"
+          }
+        }
+      },
+      "MQTTnet/4.1.4.563": {
+        "runtime": {
+          "lib/net6.0/MQTTnet.dll": {
+            "assemblyVersion": "4.1.4.563",
+            "fileVersion": "4.1.4.563"
+          }
+        }
+      },
+      "MQTTnet.AspNetCore/4.1.4.563": {
+        "dependencies": {
+          "MQTTnet": "4.1.4.563"
+        },
+        "runtime": {
+          "lib/net6.0/MQTTnet.AspNetCore.dll": {
+            "assemblyVersion": "4.1.4.563",
+            "fileVersion": "4.1.4.563"
+          }
+        }
+      },
+      "MQTTnet.AspNetCore.Routing/0.4.16": {
+        "dependencies": {
+          "MQTTnet": "4.1.4.563",
+          "MQTTnet.AspNetCore": "4.1.4.563"
+        },
+        "runtime": {
+          "lib/net6.0/MQTTnet.AspNetCore.Routing.dll": {
+            "assemblyVersion": "0.4.16.0",
+            "fileVersion": "0.4.16.0"
           }
         }
       },
@@ -900,6 +934,27 @@
       "sha512": "sha512-KZYeKBET/2Z0gY1WlTAK7+RHTl7GSbtvTLDXEZZojUdAPqpQNDL6tHv7VUpqfX5VEOh+uRGKaZXkuD253nEOBQ==",
       "path": "mono.texttemplating/2.2.1",
       "hashPath": "mono.texttemplating.2.2.1.nupkg.sha512"
+    },
+    "MQTTnet/4.1.4.563": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-gO9segUcKyQJcjV7w7OOdoAIkec7cUN65vEhYutbdWcj4rbtz/oL/RDvQVVbameXc6ChkjKx7/HbO+R8ejAUZQ==",
+      "path": "mqttnet/4.1.4.563",
+      "hashPath": "mqttnet.4.1.4.563.nupkg.sha512"
+    },
+    "MQTTnet.AspNetCore/4.1.4.563": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-jbwxw2dmOmuJORbrxFi+rJKKvOvAkAFdASVtBoHEynUT7gwnpO7j+XzqScLHHU6JYYAMmXVb+p8zCQggcKEWvg==",
+      "path": "mqttnet.aspnetcore/4.1.4.563",
+      "hashPath": "mqttnet.aspnetcore.4.1.4.563.nupkg.sha512"
+    },
+    "MQTTnet.AspNetCore.Routing/0.4.16": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-cyock5RWKaU65fzJTW+VJok8RXoXPxXDo9I4qYoazgGX6d1y/kPOQW2R6RQmvqFwTg1GdHlN5wHXUpQyqZEmjA==",
+      "path": "mqttnet.aspnetcore.routing/0.4.16",
+      "hashPath": "mqttnet.aspnetcore.routing.0.4.16.nupkg.sha512"
     },
     "MySqlConnector/2.2.5": {
       "type": "package",

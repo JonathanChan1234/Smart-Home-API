@@ -53,3 +53,6 @@ C:\Users\jonat\Desktop\SoftwareProjects\smart_home_server\bin\Debug\net7.0\Micro
 C:\Users\jonat\Desktop\SoftwareProjects\smart_home_server\bin\Debug\net7.0\Microsoft.Extensions.DependencyModel.dll
 C:\Users\jonat\Desktop\SoftwareProjects\smart_home_server\bin\Debug\net7.0\Mono.TextTemplating.dll
 C:\Users\jonat\Desktop\SoftwareProjects\smart_home_server\bin\Debug\net7.0\System.CodeDom.dll
+C:\Users\jonat\Desktop\SoftwareProjects\smart_home_server\bin\Debug\net7.0\MQTTnet.dll
+C:\Users\jonat\Desktop\SoftwareProjects\smart_home_server\bin\Debug\net7.0\MQTTnet.AspNetCore.dll
+C:\Users\jonat\Desktop\SoftwareProjects\smart_home_server\bin\Debug\net7.0\MQTTnet.AspNetCore.Routing.dll

@@ -887,6 +887,51 @@
           "lib/netstandard2.0/Mono.TextTemplating.dll": {}
         }
       },
+      "MQTTnet/4.1.4.563": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/MQTTnet.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/MQTTnet.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "MQTTnet.AspNetCore/4.1.4.563": {
+        "type": "package",
+        "dependencies": {
+          "MQTTnet": "4.1.4.563"
+        },
+        "compile": {
+          "lib/net6.0/MQTTnet.AspNetCore.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/MQTTnet.AspNetCore.dll": {
+            "related": ".xml"
+          }
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
+      "MQTTnet.AspNetCore.Routing/0.4.16": {
+        "type": "package",
+        "dependencies": {
+          "MQTTnet": "4.1.0.247",
+          "MQTTnet.AspNetCore": "4.1.0.247"
+        },
+        "compile": {
+          "lib/net6.0/MQTTnet.AspNetCore.Routing.dll": {}
+        },
+        "runtime": {
+          "lib/net6.0/MQTTnet.AspNetCore.Routing.dll": {}
+        }
+      },
       "MySqlConnector/2.2.5": {
         "type": "package",
         "compile": {
@@ -2214,6 +2259,73 @@
         "mono.texttemplating.nuspec"
       ]
     },
+    "MQTTnet/4.1.4.563": {
+      "sha512": "gO9segUcKyQJcjV7w7OOdoAIkec7cUN65vEhYutbdWcj4rbtz/oL/RDvQVVbameXc6ChkjKx7/HbO+R8ejAUZQ==",
+      "type": "package",
+      "path": "mqttnet/4.1.4.563",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net452/MQTTnet.dll",
+        "lib/net452/MQTTnet.xml",
+        "lib/net461/MQTTnet.dll",
+        "lib/net461/MQTTnet.xml",
+        "lib/net5.0/MQTTnet.dll",
+        "lib/net5.0/MQTTnet.xml",
+        "lib/net6.0/MQTTnet.dll",
+        "lib/net6.0/MQTTnet.xml",
+        "lib/netcoreapp3.1/MQTTnet.dll",
+        "lib/netcoreapp3.1/MQTTnet.xml",
+        "lib/netstandard1.3/MQTTnet.dll",
+        "lib/netstandard1.3/MQTTnet.xml",
+        "lib/netstandard2.0/MQTTnet.dll",
+        "lib/netstandard2.0/MQTTnet.xml",
+        "lib/netstandard2.1/MQTTnet.dll",
+        "lib/netstandard2.1/MQTTnet.xml",
+        "lib/uap10.0.10240/MQTTnet.dll",
+        "lib/uap10.0.10240/MQTTnet.pri",
+        "lib/uap10.0.10240/MQTTnet.xml",
+        "mqttnet.4.1.4.563.nupkg.sha512",
+        "mqttnet.nuspec",
+        "nuget.png"
+      ]
+    },
+    "MQTTnet.AspNetCore/4.1.4.563": {
+      "sha512": "jbwxw2dmOmuJORbrxFi+rJKKvOvAkAFdASVtBoHEynUT7gwnpO7j+XzqScLHHU6JYYAMmXVb+p8zCQggcKEWvg==",
+      "type": "package",
+      "path": "mqttnet.aspnetcore/4.1.4.563",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net5.0/MQTTnet.AspNetCore.dll",
+        "lib/net5.0/MQTTnet.AspNetCore.xml",
+        "lib/net6.0/MQTTnet.AspNetCore.dll",
+        "lib/net6.0/MQTTnet.AspNetCore.xml",
+        "lib/netcoreapp2.1/MQTTnet.AspNetCore.dll",
+        "lib/netcoreapp2.1/MQTTnet.AspNetCore.xml",
+        "lib/netcoreapp3.1/MQTTnet.AspNetCore.dll",
+        "lib/netcoreapp3.1/MQTTnet.AspNetCore.xml",
+        "lib/netstandard2.0/MQTTnet.AspNetCore.dll",
+        "lib/netstandard2.0/MQTTnet.AspNetCore.xml",
+        "mqttnet.aspnetcore.4.1.4.563.nupkg.sha512",
+        "mqttnet.aspnetcore.nuspec",
+        "nuget.png"
+      ]
+    },
+    "MQTTnet.AspNetCore.Routing/0.4.16": {
+      "sha512": "cyock5RWKaU65fzJTW+VJok8RXoXPxXDo9I4qYoazgGX6d1y/kPOQW2R6RQmvqFwTg1GdHlN5wHXUpQyqZEmjA==",
+      "type": "package",
+      "path": "mqttnet.aspnetcore.routing/0.4.16",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net5.0/MQTTnet.AspNetCore.Routing.dll",
+        "lib/net6.0/MQTTnet.AspNetCore.Routing.dll",
+        "lib/netcoreapp3.1/MQTTnet.AspNetCore.Routing.dll",
+        "mqttnet.aspnetcore.routing.0.4.16.nupkg.sha512",
+        "mqttnet.aspnetcore.routing.nuspec"
+      ]
+    },
     "MySqlConnector/2.2.5": {
       "sha512": "6sinY78RvryhHwpup3awdjYO7d5hhWahb5p/1VDODJhSxJggV/sBbYuKK5IQF9TuzXABiddqUbmRfM884tqA3Q==",
       "type": "package",
@@ -2736,6 +2848,8 @@
   },
   "projectFileDependencyGroups": {
     "net7.0": [
+      "MQTTnet.AspNetCore >= 4.1.4.563",
+      "MQTTnet.AspNetCore.Routing >= 0.4.16",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 7.0.2",
       "Microsoft.AspNetCore.Identity >= 2.2.0",
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore >= 7.0.2",
@@ -2743,7 +2857,8 @@
       "Microsoft.EntityFrameworkCore.Design >= 7.0.2",
       "Microsoft.EntityFrameworkCore.Relational >= 7.0.2",
       "Pomelo.EntityFrameworkCore.MySql >= 7.0.0",
-      "Swashbuckle.AspNetCore >= 6.2.3"
+      "Swashbuckle.AspNetCore >= 6.2.3",
+      "mqttnet >= 4.1.4.563"
     ]
   },
   "packageFolders": {
@@ -2785,6 +2900,14 @@
       "net7.0": {
         "targetAlias": "net7.0",
         "dependencies": {
+          "MQTTnet.AspNetCore": {
+            "target": "Package",
+            "version": "[4.1.4.563, )"
+          },
+          "MQTTnet.AspNetCore.Routing": {
+            "target": "Package",
+            "version": "[0.4.16, )"
+          },
           "Microsoft.AspNetCore.Authentication.JwtBearer": {
             "target": "Package",
             "version": "[7.0.2, )"
@@ -2818,6 +2941,10 @@
           "Swashbuckle.AspNetCore": {
             "target": "Package",
             "version": "[6.2.3, )"
+          },
+          "mqttnet": {
+            "target": "Package",
+            "version": "[4.1.4.563, )"
           }
         },
         "imports": [

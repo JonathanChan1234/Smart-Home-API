@@ -12,6 +12,7 @@ public class ExceptionHandler
            var exceptionHandlerPathFeature =
                context.Features.Get<IExceptionHandlerPathFeature>();
            var error = exceptionHandlerPathFeature?.Error;
+           System.Console.WriteLine(error);
            if (error == null) return;
            if (error is ModelNotFoundException)
            {

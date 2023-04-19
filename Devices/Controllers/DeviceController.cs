@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using smart_home_server.Devices.Filters;
-using smart_home_server.Devices.Models;
+using smart_home_server.Devices.ResourceModels;
 using smart_home_server.Devices.Services;
 
 [ApiController]
@@ -18,7 +18,7 @@ public class DeviceController : ControllerBase
     [TypeFilter(typeof(DevicePermissionFilter), Arguments = new object[] { "installer" })]
     [Authorize]
     [HttpGet]
-    public async Task<ActionResult<List<Device>>> GetLight(string roomId)
+    public async Task<ActionResult<List<DeviceDto>>> GetLight(string roomId)
     {
         var devices = await _deviceService.GetRoomDevices(roomId);
         return devices;

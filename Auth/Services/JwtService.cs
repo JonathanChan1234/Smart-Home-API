@@ -27,6 +27,22 @@ public class JwtService : IJwtService
         _validationParameters = validationParameters;
     }
 
+    public async Task<bool> ValidateJwt(string accessToken, string userId)
+    {
+        var jwtTokenHandler = new JwtSecurityTokenHandler();
+
+        // Decode the JWT and retrieve the claim
+        var claim = jwtTokenHandler.ValidateToken(accessToken, _validationParameters, out SecurityToken securityToken);
+        if (claim == null) return false;
+
+        // Check if the jwt is in the black list
+        var revoked = await CheckIfJwtInBlackList(securityToken.Id);
+        if (revoked) return false;
+
+        // Check if the jwt belongs to the user
+        return claim.Claims.FirstOrDefault(c => c.Type == JwtService.USER_ID)?.Value == userId;
+    }
+
     /// Check if the jwt is valid for renewal using refresh token
     public JwtSecurityToken? CheckIfJwtIsValidForRenew(string accessToken)
     {

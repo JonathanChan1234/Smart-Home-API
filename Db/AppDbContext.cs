@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using smart_home_server.Home.Models;
 using smart_home_server.Devices.Models;
+using smart_home_server.Mqtt.Client.Models;
 
 namespace smart_home_server.Db;
 
@@ -16,6 +17,7 @@ public class AppDbContext : IdentityUserContext<ApplicationUser>
     public DbSet<Device> Devices { get; set; } = null!;
     public DbSet<Light> Lights { get; set; } = null!;
     public DbSet<Shade> Shades { get; set; } = null!;
+    public DbSet<MqttClient> MqttClients { get; set; } = null!;
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -90,6 +92,16 @@ public class AppDbContext : IdentityUserContext<ApplicationUser>
         builder.Entity<Room>()
             .HasMany(room => room.Devices)
             .WithOne(device => device.Room)
+            .IsRequired();
+
+        // One-to-many (MqttClient to User/Home)
+        builder.Entity<MqttClient>()
+            .HasOne(m => m.User)
+            .WithMany(u => u.MqttClients)
+            .IsRequired();
+        builder.Entity<ApplicationUser>()
+            .HasMany(u => u.MqttClients)
+            .WithOne(m => m.User)
             .IsRequired();
     }
 }

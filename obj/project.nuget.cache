@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "lp3zQ3+Qa83MJDQ4y2IZ+GOCKcd9fMFpCVMfaXAE06BT3oApeLc0HC/xUdx1nUA/shs0civzCqAUSS2Y/mzFjA==",
+  "dgSpecHash": "9tJy7OoyHq2FEXCdvfxlO3wciWnojJqGRWWTbhINDqZR9O9SgqHlI0L9o/7QcX2Py2Hsr74Mt8i2DfnSeCgxGw==",
   "success": true,
   "projectFilePath": "C:\\Users\\jonat\\Desktop\\SoftwareProjects\\smart_home_server\\smart_home_server.csproj",
   "expectedPackageFiles": [
@@ -56,6 +56,9 @@
     "C:\\Users\\jonat\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",
     "C:\\Users\\jonat\\.nuget\\packages\\microsoft.win32.registry\\4.5.0\\microsoft.win32.registry.4.5.0.nupkg.sha512",
     "C:\\Users\\jonat\\.nuget\\packages\\mono.texttemplating\\2.2.1\\mono.texttemplating.2.2.1.nupkg.sha512",
+    "C:\\Users\\jonat\\.nuget\\packages\\mqttnet\\4.1.4.563\\mqttnet.4.1.4.563.nupkg.sha512",
+    "C:\\Users\\jonat\\.nuget\\packages\\mqttnet.aspnetcore\\4.1.4.563\\mqttnet.aspnetcore.4.1.4.563.nupkg.sha512",
+    "C:\\Users\\jonat\\.nuget\\packages\\mqttnet.aspnetcore.routing\\0.4.16\\mqttnet.aspnetcore.routing.0.4.16.nupkg.sha512",
     "C:\\Users\\jonat\\.nuget\\packages\\mysqlconnector\\2.2.5\\mysqlconnector.2.2.5.nupkg.sha512",
     "C:\\Users\\jonat\\.nuget\\packages\\pomelo.entityframeworkcore.mysql\\7.0.0\\pomelo.entityframeworkcore.mysql.7.0.0.nupkg.sha512",
     "C:\\Users\\jonat\\.nuget\\packages\\swashbuckle.aspnetcore\\6.2.3\\swashbuckle.aspnetcore.6.2.3.nupkg.sha512",
