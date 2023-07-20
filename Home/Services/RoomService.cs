@@ -12,6 +12,7 @@ public interface IRoomService
     Task DeleteRoom(string userId, string homeId, string floorId, string roomId);
     Task<List<Room>> GetFloorRooms(string userId, string homeId, string floorId, SearchOptionsQuery options);
     Task<Room?> GetRoomById(string floorId, string roomId);
+    Task<Room?> GetRoomInHome(string homeId, string roomId);
     Task<bool> CheckIfRoomBelongToOwner(string userId, string roomId);
     Task UpdateRoom(string userId, string homeId, string floorId, string roomId, string? name, bool? isFavorite);
 }
@@ -49,7 +50,7 @@ class RoomService : IRoomService
                         join h in _context.Homes on f.HomeId equals h.Id
                         join u in _context.Users on h.OwnerId equals u.Id
                         where u.Id == userId
-                        where r.Id == new Guid(roomId)
+                        where r.Id.ToString() == roomId
                         select r;
         var room = await roomQuery.FirstOrDefaultAsync();
         return room != null;
@@ -77,6 +78,16 @@ class RoomService : IRoomService
             .Where(r => r.Id.ToString() == roomId && r.FloorId.ToString() == floorId)
             .FirstOrDefaultAsync();
         return room;
+    }
+
+    public async Task<Room?> GetRoomInHome(string homeId, string roomId)
+    {
+        var roomQuery = from r in _context.Rooms
+                        join f in _context.Floors on r.FloorId equals f.Id
+                        join h in _context.Homes on f.HomeId equals h.Id
+                        where (r.Id.ToString() == roomId && h.Id.ToString() == homeId)
+                        select r;
+        return (await roomQuery.FirstOrDefaultAsync());
     }
 
     public async Task<List<Room>> GetFloorRooms(string userId, string homeId, string floorId, SearchOptionsQuery options)

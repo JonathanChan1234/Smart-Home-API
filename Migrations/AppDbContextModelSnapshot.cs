@@ -187,7 +187,7 @@ namespace smarthomeserver.Migrations
 
                     b.HasKey("Jti");
 
-                    b.ToTable("JwtBlackList");
+                    b.ToTable("JwtBlackList", (string)null);
                 });
 
             modelBuilder.Entity("smart_home_server.Auth.Models.RefreshToken", b =>
@@ -224,34 +224,7 @@ namespace smarthomeserver.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshToken");
-                });
-
-            modelBuilder.Entity("smart_home_server.Devices.Models.Device", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<Guid>("RoomId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("StatusLastUpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoomId", "Name")
-                        .IsUnique();
-
-                    b.ToTable("Devices");
-
-                    b.UseTptMappingStrategy();
+                    b.ToTable("RefreshToken", (string)null);
                 });
 
             modelBuilder.Entity("smart_home_server.Home.Models.Floor", b =>
@@ -275,7 +248,7 @@ namespace smarthomeserver.Migrations
                     b.HasIndex("Name", "HomeId")
                         .IsUnique();
 
-                    b.ToTable("Floors");
+                    b.ToTable("Floors", (string)null);
                 });
 
             modelBuilder.Entity("smart_home_server.Home.Models.Room", b =>
@@ -304,7 +277,7 @@ namespace smarthomeserver.Migrations
                     b.HasIndex("Name", "FloorId")
                         .IsUnique();
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", (string)null);
                 });
 
             modelBuilder.Entity("smart_home_server.Home.Models.SmartHome", b =>
@@ -341,7 +314,7 @@ namespace smarthomeserver.Migrations
                     b.HasIndex("Name", "OwnerId")
                         .IsUnique();
 
-                    b.ToTable("SmartHome");
+                    b.ToTable("SmartHome", (string)null);
                 });
 
             modelBuilder.Entity("smart_home_server.Mqtt.Client.Models.MqttClient", b =>
@@ -369,33 +342,108 @@ namespace smarthomeserver.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("MqttClients");
+                    b.ToTable("MqttClients", (string)null);
                 });
 
-            modelBuilder.Entity("smart_home_server.Devices.Models.Light", b =>
+            modelBuilder.Entity("smart_home_server.Scenes.Models.Scene", b =>
                 {
-                    b.HasBaseType("smart_home_server.Devices.Models.Device");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
 
-                    b.Property<bool>("Dimmable")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<Guid>("HomeId")
+                        .HasColumnType("char(36)");
 
-                    b.Property<int>("Level")
-                        .HasColumnType("int");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
-                    b.ToTable("Lights");
+                    b.HasKey("Id");
+
+                    b.HasIndex("HomeId");
+
+                    b.HasIndex("Name", "HomeId")
+                        .IsUnique();
+
+                    b.ToTable("scenes", (string)null);
                 });
 
-            modelBuilder.Entity("smart_home_server.Devices.Models.Shade", b =>
+            modelBuilder.Entity("smart_home_server.Scenes.Models.SceneAction", b =>
                 {
-                    b.HasBaseType("smart_home_server.Devices.Models.Device");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
 
-                    b.Property<bool>("HasLevel")
+                    b.Property<byte[]>("Action")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("SceneId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SceneId");
+
+                    b.HasIndex("DeviceId", "SceneId")
+                        .IsUnique();
+
+                    b.ToTable("actions", (string)null);
+                });
+
+            modelBuilder.Entity("smart_home_server.SmartDevices.Models.SmartDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<byte[]>("Capabilities")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<Guid>("HomeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("MainCategory")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<bool>("OnlineStatus")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<int>("Level")
-                        .HasColumnType("int");
+                    b.Property<byte[]>("Properties")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
 
-                    b.ToTable("Shades");
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("StatusLastUpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("SubCategory")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HomeId");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("SmartDevices", (string)null);
                 });
 
             modelBuilder.Entity("ApplicationUserSmartHome", b =>
@@ -466,17 +514,6 @@ namespace smarthomeserver.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("smart_home_server.Devices.Models.Device", b =>
-                {
-                    b.HasOne("smart_home_server.Home.Models.Room", "Room")
-                        .WithMany("Devices")
-                        .HasForeignKey("RoomId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Room");
-                });
-
             modelBuilder.Entity("smart_home_server.Home.Models.Floor", b =>
                 {
                     b.HasOne("smart_home_server.Home.Models.SmartHome", "Home")
@@ -529,22 +566,53 @@ namespace smarthomeserver.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("smart_home_server.Devices.Models.Light", b =>
+            modelBuilder.Entity("smart_home_server.Scenes.Models.Scene", b =>
                 {
-                    b.HasOne("smart_home_server.Devices.Models.Device", null)
-                        .WithOne()
-                        .HasForeignKey("smart_home_server.Devices.Models.Light", "Id")
+                    b.HasOne("smart_home_server.Home.Models.SmartHome", "Home")
+                        .WithMany("Scenes")
+                        .HasForeignKey("HomeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Home");
                 });
 
-            modelBuilder.Entity("smart_home_server.Devices.Models.Shade", b =>
+            modelBuilder.Entity("smart_home_server.Scenes.Models.SceneAction", b =>
                 {
-                    b.HasOne("smart_home_server.Devices.Models.Device", null)
-                        .WithOne()
-                        .HasForeignKey("smart_home_server.Devices.Models.Shade", "Id")
+                    b.HasOne("smart_home_server.SmartDevices.Models.SmartDevice", "Device")
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("smart_home_server.Scenes.Models.Scene", "Scene")
+                        .WithMany("Actions")
+                        .HasForeignKey("SceneId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Device");
+
+                    b.Navigation("Scene");
+                });
+
+            modelBuilder.Entity("smart_home_server.SmartDevices.Models.SmartDevice", b =>
+                {
+                    b.HasOne("smart_home_server.Home.Models.SmartHome", "Home")
+                        .WithMany("SmartDevices")
+                        .HasForeignKey("HomeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("smart_home_server.Home.Models.Room", "Room")
+                        .WithMany("SmartDevices")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Home");
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("smart_home_server.Auth.Models.ApplicationUser", b =>
@@ -561,12 +629,21 @@ namespace smarthomeserver.Migrations
 
             modelBuilder.Entity("smart_home_server.Home.Models.Room", b =>
                 {
-                    b.Navigation("Devices");
+                    b.Navigation("SmartDevices");
                 });
 
             modelBuilder.Entity("smart_home_server.Home.Models.SmartHome", b =>
                 {
                     b.Navigation("Floors");
+
+                    b.Navigation("Scenes");
+
+                    b.Navigation("SmartDevices");
+                });
+
+            modelBuilder.Entity("smart_home_server.Scenes.Models.Scene", b =>
+                {
+                    b.Navigation("Actions");
                 });
 #pragma warning restore 612, 618
         }

@@ -33,7 +33,10 @@ public class HomeService : IHomeService
     {
         var query = _context.Homes.Where(h => h.Id.ToString() == homeId);
         if (userId != null) query = query.Where(h => h.OwnerId == userId);
-        return query.FirstOrDefaultAsync();
+        return query
+            .Include(h => h.Users)
+            .Include(h => h.Installers)
+            .FirstOrDefaultAsync();
     }
 
     public Task<List<SmartHome>> GetOwnerHome(ApplicationUser user, SearchOptionsQuery options)

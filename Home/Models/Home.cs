@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using smart_home_server.Auth.Models;
+using smart_home_server.Scenes.Models;
+using smart_home_server.SmartDevices.Models;
 
 namespace smart_home_server.Home.Models;
 
@@ -42,4 +44,10 @@ public class SmartHome
 
     [JsonIgnore]
     public IList<ApplicationUser> Installers { get; set; } = new List<ApplicationUser>();
+
+    [JsonIgnore]
+    public IList<Scene> Scenes { get; set; } = new List<Scene>();
+
+    [JsonIgnore]
+    public IList<SmartDevice> SmartDevices { get; set; } = new List<SmartDevice>();
 }

@@ -33,9 +33,8 @@ public class ExceptionHandler
                await context.Response.WriteAsJsonAsync(new { message = error.Message });
                return;
            }
-           if (error is BadRequestException)
+           if (error is ForbiddenException)
            {
-
                context.Response.StatusCode = StatusCodes.Status403Forbidden;
                await context.Response.WriteAsJsonAsync(new { message = error.Message });
                return;

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
-using smart_home_server.Devices.Models;
+using smart_home_server.SmartDevices.Models;
 
 namespace smart_home_server.Home.Models;
 
@@ -26,5 +26,5 @@ public class Room
     public Floor Floor { get; set; } = null!;
 
     [JsonIgnore]
-    public List<Device> Devices { get; set; } = null!;
+    public List<SmartDevice> SmartDevices { get; set; } = null!;
 }

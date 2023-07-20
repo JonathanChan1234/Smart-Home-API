@@ -9,12 +9,17 @@ using smart_home_server.Auth.Services;
 using smart_home_server.Home.Services;
 using smart_home_server.Exceptions;
 using smart_home_server.Middleware;
-using smart_home_server.Devices.Services;
 using MQTTnet.AspNetCore;
 using MQTTnet.AspNetCore.Routing;
 using System.Text.Json;
 using smart_home_server.Mqtt.Authentication;
 using smart_home_server.Mqtt.Client.Services;
+using Microsoft.AspNetCore.Authorization;
+using smart_home_server.Scenes.Services;
+using smart_home_server.Home.Authorization;
+using smart_home_server.SmartDevices.SubDevices.Lights.Service;
+using smart_home_server.SmartDevices.Services;
+using smart_home_server.SmartDevices.SubDevices.Shades.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +61,7 @@ var tokenValidationParameter = new TokenValidationParameters()
             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")),
 };
 builder.Services.AddSingleton(tokenValidationParameter);
+builder.Services.AddSingleton<IAuthorizationHandler, HomeAuthorizationHandler>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -69,10 +75,14 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IFloorService, FloorService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
-builder.Services.AddScoped<IDeviceService, DeviceService>();
-builder.Services.AddScoped<ILightService, LightService>();
-builder.Services.AddScoped<IShadeService, ShadeService>();
 builder.Services.AddScoped<IMqttClientService, MqttClientService>();
+builder.Services.AddScoped<ISceneService, SceneService>();
+builder.Services.AddScoped<ISceneActionService, SceneActionService>();
+builder.Services.AddScoped<ILightActionService, LightActionService>();
+builder.Services.AddScoped<IShadeActionService, ShadeActionService>();
+builder.Services.AddScoped<ISmartDeviceService, SmartDeviceService>();
+builder.Services.AddScoped<ISmartLightService, SmartLightService>();
+builder.Services.AddScoped<ISmartShadeService, SmartShadeService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -120,9 +130,6 @@ app.MapConnectionHandler<MqttConnectionHandler>(
         protocolList => protocolList.FirstOrDefault() ?? String.Empty);
 app.UseMqttServer(server =>
 {
-    var contextOptions = new DbContextOptionsBuilder<AppDbContext>()
-        .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-        .Options;
     server.WithAuthentication(app.Services);
     server.WithAttributeRouting(app.Services, allowUnmatchedRoutes: false);
 });
