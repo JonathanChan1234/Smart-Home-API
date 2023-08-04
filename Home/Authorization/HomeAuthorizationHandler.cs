@@ -47,7 +47,7 @@ public class HomeAuthorizationHandler : AuthorizationHandler<HomeOperationRequir
         {
             if (installer == null && user == null && !isOwner)
             {
-                context.Fail(new AuthorizationFailureReason(this, "home owner not found"));
+                context.Fail(new AuthorizationFailureReason(this, "home user not found"));
                 return Task.CompletedTask;
             }
         }

@@ -8,6 +8,7 @@ using smart_home_server.SmartDevices.Models;
 using Newtonsoft.Json;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using smart_home_server.Processors.Models;
 
 namespace smart_home_server.Db;
 
@@ -22,6 +23,7 @@ public class AppDbContext : IdentityUserContext<ApplicationUser>
     public DbSet<SceneAction> SceneActions { get; set; } = null!;
     public DbSet<MqttClient> MqttClients { get; set; } = null!;
     public DbSet<SmartDevice> SmartDevices { get; set; } = null!;
+    public DbSet<Processor> Processors { get; set; } = null!;
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -53,7 +55,6 @@ public class AppDbContext : IdentityUserContext<ApplicationUser>
             .WithMany(user => user.InstallerHome)
             .UsingEntity(join => join.ToTable("HomeInstallers"));
 
-
         // Many-to-One (User (owner) to home)
         builder.Entity<SmartHome>().HasIndex(home => new { home.Name, home.OwnerId }).IsUnique();
         builder.Entity<ApplicationUser>()
@@ -63,6 +64,22 @@ public class AppDbContext : IdentityUserContext<ApplicationUser>
         builder.Entity<SmartHome>()
             .HasOne(home => home.Owner)
             .WithMany(user => user.OwnerHome);
+
+        // One-to-One (Home to Processor)
+        builder.Entity<SmartHome>()
+            .HasOne(h => h.Processor)
+            .WithOne(p => p.Home);
+        builder.Entity<Processor>()
+            .HasOne(p => p.Home)
+            .WithOne(h => h.Processor);
+
+        // One-to-one (Processor to MqttClient)
+        builder.Entity<Processor>()
+            .HasOne(p => p.MqttClient)
+            .WithMany(m => m.Processors);
+        builder.Entity<MqttClient>()
+            .HasMany(m => m.Processors)
+            .WithOne(p => p.MqttClient);
 
         // One-to-Many (Home to Floor)
         builder.Entity<Floor>().HasIndex(floor => new { floor.Name, floor.HomeId }).IsUnique();

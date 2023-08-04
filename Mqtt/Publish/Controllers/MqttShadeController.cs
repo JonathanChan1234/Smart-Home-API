@@ -6,7 +6,7 @@ using smart_home_server.Exceptions;
 using smart_home_server.Home.Models;
 using smart_home_server.Home.Services;
 using smart_home_server.Mqtt.Client.Services;
-using smart_home_server.Mqtt.Publish.Dto;
+using smart_home_server.Scenes.Models;
 using smart_home_server.SmartDevices.ResourceModels;
 using smart_home_server.SmartDevices.SubDevices.Shades.Models;
 using smart_home_server.SmartDevices.SubDevices.Shades.Services;
@@ -20,7 +20,7 @@ public class MqttShadeController : MqttBaseController
     private readonly ILogger<MqttShadeController> _logger;
     private readonly ISmartShadeService _shadeService;
     private readonly IHomeService _homeService;
-    private readonly IMqttClientService _mqttClientSevice;
+    private readonly IMqttClientService _mqttClientService;
 
     public MqttShadeController(
         ILogger<MqttShadeController> logger,
@@ -32,7 +32,7 @@ public class MqttShadeController : MqttBaseController
         _logger = logger;
         _shadeService = shadeService;
         _homeService = homeService;
-        _mqttClientSevice = mqttClientService;
+        _mqttClientService = mqttClientService;
     }
 
     private bool ValidatePayload<T>(T dto)
@@ -49,7 +49,7 @@ public class MqttShadeController : MqttBaseController
         var validId = int.TryParse(clientId, out int cid);
         if (!validId) throw new BadRequestException($"invalid client id {clientId}");
 
-        var client = await _mqttClientSevice.FindMqttClientById(cid);
+        var client = await _mqttClientService.FindMqttClientById(cid);
         // cannot find the mqtt client id
         if (client == null) throw new BadRequestException($"client id {clientId} does not exist");
 
@@ -89,14 +89,14 @@ public class MqttShadeController : MqttBaseController
     public async Task HandleShadeActionControl(
         string homeId,
         string deviceId,
-        [FromPayload] ShadeActionPayload dto)
+        [FromPayload] UpdateDeviceStatusDto<ShadeAction> dto)
     {
         try
         {
             await ValidateClient(homeId);
             var home = await GetHomeFromParams(homeId);
             var shade = await _shadeService.FindShadeById(home, deviceId);
-            if (shade == null || shade?.StatusLastUpdatedAt > dto.Time)
+            if (shade == null || shade?.StatusLastUpdatedAt > dto.LastUpdatedAt)
                 throw new BadRequestException("control command date expired");
             await Ok();
         }

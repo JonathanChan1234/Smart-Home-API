@@ -6,6 +6,7 @@ using smart_home_server.Auth.Exceptions;
 using smart_home_server.Auth.Models;
 using smart_home_server.Auth.Services;
 using smart_home_server.Exceptions;
+using smart_home_server.Home.Authorization;
 using smart_home_server.Home.Models;
 using smart_home_server.Home.Services;
 using smart_home_server.Mqtt.Client.Models;
@@ -19,15 +20,18 @@ public class MqttClientController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IHomeService _homeService;
+    private readonly IAuthorizationService _authorizationService;
     private readonly IMqttClientService _mqttClientService;
 
     public MqttClientController(
         IAuthService authService,
         IHomeService homeService,
+        IAuthorizationService authorizationService,
         IMqttClientService mqttClientService)
     {
         _authService = authService;
         _homeService = homeService;
+        _authorizationService = authorizationService;
         _mqttClientService = mqttClientService;
     }
 
@@ -40,10 +44,14 @@ public class MqttClientController : ControllerBase
         return user;
     }
 
-    private async Task<SmartHome> GetUserHome(string userId, string homeId)
+    private async Task<SmartHome> GetHomeByParams(string homeId, HomeOperationRequirement right)
     {
-        var home = await _homeService.GetHomeById(homeId, userId);
-        if (home == null) throw new BadRequestException("Non existing home");
+        var home = await _homeService.GetHomeById(homeId, null);
+        if (home == null)
+            throw new ModelNotFoundException($"Cannot find home {homeId}");
+
+        if (!(await _authorizationService.AuthorizeAsync(User, home, right)).Succeeded)
+            throw new ForbiddenException($"No permisson for home {homeId}");
         return home;
     }
 
@@ -51,9 +59,8 @@ public class MqttClientController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<MqttClient>> CreateMqttClient(string homeId)
     {
-        var user = await GetAuthUser();
-        var home = await GetUserHome(user.Id, homeId);
-        var client = await _mqttClientService.RegisterMqttClient(user, home);
+        var home = await GetHomeByParams(homeId, HomeOperation.All);
+        var client = await _mqttClientService.RegisterMqttClient(await GetAuthUser(), home);
         return client;
     }
 
@@ -61,9 +68,8 @@ public class MqttClientController : ControllerBase
     [HttpDelete]
     public async Task<IActionResult> RevokeMqttClient(string homeId)
     {
-        var user = await GetAuthUser();
-        var home = await GetUserHome(user.Id, homeId);
-        await _mqttClientService.RevokeAllMqttClients(user, home);
+        var home = await GetHomeByParams(homeId, HomeOperation.All);
+        await _mqttClientService.RevokeAllMqttClients(await GetAuthUser(), home);
         return NoContent();
     }
 }

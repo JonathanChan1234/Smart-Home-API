@@ -33,20 +33,20 @@ public class SmartShadeController : ControllerBase
         _authorizationService = authorizationService;
     }
 
-    private async Task<SmartHome> GetHomeByParams(string homeId)
+    private async Task<SmartHome> GetHomeByParams(string homeId, HomeOperationRequirement right)
     {
         var home = await _homeService.GetHomeById(homeId, null);
         if (home == null)
             throw new ModelNotFoundException($"Cannot find home {homeId}");
 
-        if (!(await _authorizationService.AuthorizeAsync(User, home, HomeOperation.All)).Succeeded)
+        if (!(await _authorizationService.AuthorizeAsync(User, home, right)).Succeeded)
             throw new ForbiddenException($"No permisson for home {homeId}");
         return home;
     }
 
-    private async Task<Room> GetRoomByParams(string homeId, string roomId)
+    private async Task<Room> GetRoomByParams(SmartHome home, string roomId)
     {
-        var room = await _roomService.GetRoomInHome(homeId, roomId);
+        var room = await _roomService.GetRoomInHome(home, roomId);
         if (room == null)
             throw new ModelNotFoundException($"Cannot find room {roomId}");
         return room;
@@ -59,9 +59,9 @@ public class SmartShadeController : ControllerBase
         [FromQuery] string? roomId
     )
     {
-        var home = await GetHomeByParams(homeId);
+        var home = await GetHomeByParams(homeId, HomeOperation.All);
         Room? room = null;
-        if (roomId != null) room = await GetRoomByParams(homeId, roomId);
+        if (roomId != null) room = await GetRoomByParams(home, roomId);
         return (await _smartShadeService.FindShadeInHome(home, room));
     }
 
@@ -72,8 +72,8 @@ public class SmartShadeController : ControllerBase
         [FromBody] CreateDeviceDto<ShadeCapabilities> dto
     )
     {
-        var home = await GetHomeByParams(homeId);
-        var room = await GetRoomByParams(homeId, dto.RoomId);
+        var home = await GetHomeByParams(homeId, HomeOperation.Installer);
+        var room = await GetRoomByParams(home, dto.RoomId);
 
         var shade = await _smartShadeService.CreateShadeDevice(
             home,
@@ -93,7 +93,7 @@ public class SmartShadeController : ControllerBase
         [FromBody] UpdateDeviceStatusDto<ShadeProperties> dto
     )
     {
-        var home = await GetHomeByParams(homeId);
+        var home = await GetHomeByParams(homeId, HomeOperation.Installer);
         await _smartShadeService.UpdateShadeStatus(home, deviceId, dto.LastUpdatedAt, dto.Properties, dto.OnlineStatus);
         return NoContent();
     }
@@ -106,7 +106,7 @@ public class SmartShadeController : ControllerBase
         [FromBody] ShadeCapabilities capabilities
     )
     {
-        var home = await GetHomeByParams(homeId);
+        var home = await GetHomeByParams(homeId, HomeOperation.Installer);
         await _smartShadeService.UpdateShadeCapabilities(home, deviceId, capabilities);
         return NoContent();
     }

@@ -32,20 +32,20 @@ public class SmartDeviceController : ControllerBase
         _authorizationService = authorizationService;
     }
 
-    private async Task<SmartHome> GetHomeByParams(string homeId)
+    private async Task<SmartHome> GetHomeByParams(string homeId, HomeOperationRequirement right)
     {
         var home = await _homeService.GetHomeById(homeId, null);
         if (home == null)
             throw new ModelNotFoundException($"Cannot find home {homeId}");
 
-        if (!(await _authorizationService.AuthorizeAsync(User, home, HomeOperation.All)).Succeeded)
+        if (!(await _authorizationService.AuthorizeAsync(User, home, right)).Succeeded)
             throw new ForbiddenException($"No permisson for home {homeId}");
         return home;
     }
 
-    private async Task<Room> GetRoomByParams(string homeId, string roomId)
+    private async Task<Room> GetRoomByParams(SmartHome home, string roomId)
     {
-        var room = await _roomService.GetRoomInHome(homeId, roomId);
+        var room = await _roomService.GetRoomInHome(home, roomId);
         if (room == null)
             throw new ModelNotFoundException($"Cannot find room {roomId}");
         return room;
@@ -58,9 +58,9 @@ public class SmartDeviceController : ControllerBase
         [FromQuery] string? roomId
     )
     {
-        var home = await GetHomeByParams(homeId);
+        var home = await GetHomeByParams(homeId, HomeOperation.All);
         Room? room = null;
-        if (roomId != null) room = await GetRoomByParams(homeId, roomId);
+        if (roomId != null) room = await GetRoomByParams(home, roomId);
         return (await _smartDeviceService.FindDevicesInHome(home, room));
     }
 
@@ -71,9 +71,9 @@ public class SmartDeviceController : ControllerBase
         [FromQuery] string? roomId
     )
     {
-        var home = await GetHomeByParams(homeId);
+        var home = await GetHomeByParams(homeId, HomeOperation.All);
         Room? room = null;
-        if (roomId != null) room = await GetRoomByParams(homeId, roomId);
+        if (roomId != null) room = await GetRoomByParams(home, roomId);
         return (await _smartDeviceService.FindDeviceCount(home, room));
     }
 
@@ -85,9 +85,9 @@ public class SmartDeviceController : ControllerBase
         [FromBody] UpdateDeviceDto dto
     )
     {
-        var home = await GetHomeByParams(homeId);
+        var home = await GetHomeByParams(homeId, HomeOperation.All);
         Room? room = null;
-        if (dto.RoomId != null) room = await GetRoomByParams(homeId, dto.RoomId);
+        if (dto.RoomId != null) room = await GetRoomByParams(home, dto.RoomId);
         await _smartDeviceService.UpdateDeviceName(home, deviceId, dto.Name, room);
         return NoContent();
     }
@@ -99,7 +99,7 @@ public class SmartDeviceController : ControllerBase
         string deviceId
     )
     {
-        var home = await GetHomeByParams(homeId);
+        var home = await GetHomeByParams(homeId, HomeOperation.Installer);
         await _smartDeviceService.DeleteDevice(home, deviceId);
         return NoContent();
     }

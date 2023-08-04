@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using smart_home_server.Auth.Models;
 using smart_home_server.Home.Models;
+using smart_home_server.Processors.Models;
 
 namespace smart_home_server.Mqtt.Client.Models;
 
@@ -28,4 +29,7 @@ public class MqttClient
     public bool Revoked { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    [JsonIgnore]
+    public List<Processor> Processors { get; set; } = null!;
 }

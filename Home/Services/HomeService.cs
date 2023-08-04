@@ -13,12 +13,16 @@ public interface IHomeService
     Task<SmartHome?> GetHomeById(string homeId, string? userId);
     Task<List<ApplicationUser>> GetHomeInstallers(ApplicationUser user, string homeId);
     Task<List<ApplicationUser>> GetHomeUsers(ApplicationUser user, string homeId);
-    Task AddInstallerToHome(ApplicationUser user, string homeId, string password);
-    Task AddUserToHome(ApplicationUser user, string homeId, string password);
+    Task<SmartHome> AddInstallerToHome(ApplicationUser user, string homeId, string password);
+    Task<SmartHome> AddUserToHome(ApplicationUser user, string homeId, string password);
     Task<SmartHome> CreateHome(ApplicationUser user, CreateHomeDto dto);
-    Task DeleteHome(ApplicationUser user, string homeId);
+    Task DeleteHome(SmartHome home);
     Task<List<SmartHome>> GetOwnerHome(ApplicationUser user, SearchOptionsQuery options);
-    Task<SmartHome> UpdateHome(ApplicationUser user, string homeId, UpdateHomeDto dto);
+    Task<List<SmartHome>> GetUserHome(ApplicationUser user, SearchOptionsQuery options);
+    Task<List<SmartHome>> GetInstallerHome(ApplicationUser user, SearchOptionsQuery options);
+    Task RemoveUserFromHome(ApplicationUser user, string homeId);
+    Task RemoveInstallerFromHome(ApplicationUser user, string homeId);
+    Task<SmartHome> UpdateHome(SmartHome home, UpdateHomeDto dto);
 }
 
 public class HomeService : IHomeService
@@ -42,6 +46,24 @@ public class HomeService : IHomeService
     public Task<List<SmartHome>> GetOwnerHome(ApplicationUser user, SearchOptionsQuery options)
     {
         var query = _context.Homes.Where(h => h.OwnerId == user.Id);
+        if (options.Name != null) query = query.Where(h => h.Name == options.Name);
+        var page = options.Page ?? 1;
+        var recordPerPages = options.RecordPerPage ?? 10;
+        return query.OrderBy(h => h.Id).Skip((page - 1) * recordPerPages).Take(recordPerPages).ToListAsync();
+    }
+
+    public Task<List<SmartHome>> GetUserHome(ApplicationUser user, SearchOptionsQuery options)
+    {
+        var query = _context.Homes.Where(h => h.Users.Contains(user));
+        if (options.Name != null) query = query.Where(h => h.Name == options.Name);
+        var page = options.Page ?? 1;
+        var recordPerPages = options.RecordPerPage ?? 10;
+        return query.OrderBy(h => h.Id).Skip((page - 1) * recordPerPages).Take(recordPerPages).ToListAsync();
+    }
+
+    public Task<List<SmartHome>> GetInstallerHome(ApplicationUser user, SearchOptionsQuery options)
+    {
+        var query = _context.Homes.Where(h => h.Installers.Contains(user));
         if (options.Name != null) query = query.Where(h => h.Name == options.Name);
         var page = options.Page ?? 1;
         var recordPerPages = options.RecordPerPage ?? 10;
@@ -83,30 +105,38 @@ public class HomeService : IHomeService
         return home;
     }
 
-    public async Task AddInstallerToHome(ApplicationUser user, string homeId, string password)
+    public async Task<SmartHome> AddInstallerToHome(ApplicationUser user, string homeId, string password)
     {
-        var home = await GetHomeById(homeId, user.Id);
+        var home = await GetHomeById(homeId, null);
         if (home == null) throw new ModelNotFoundException();
         if (home.OwnerId == user.Id) throw new BadRequestException("Cannot add installer to home owned by installer");
+
+        var existingInstaller = home.Installers.FirstOrDefault(u => u.Id == user.Id);
+        if (existingInstaller != null) throw new BadRequestException("User already added to this home");
+
         if (home.InstallerPassword != PasswordHasher.CreateMd5(password)) throw new BadRequestException("Wrong installer password");
         home.Installers.Add(user);
         await _context.SaveChangesAsync();
+        return home;
     }
 
-    public async Task AddUserToHome(ApplicationUser user, string homeId, string password)
+    public async Task<SmartHome> AddUserToHome(ApplicationUser user, string homeId, string password)
     {
-        var home = await GetHomeById(homeId, user.Id);
-        if (home == null) throw new ModelNotFoundException();
+        var home = await GetHomeById(homeId, null);
+        if (home == null) throw new ModelNotFoundException($"home {homeId} does not exist");
         if (home.OwnerId == user.Id) throw new BadRequestException("Cannot add user to home owned by user");
+
+        var existingUser = home.Users.FirstOrDefault(u => u.Id == user.Id);
+        if (existingUser != null) throw new BadRequestException("User already added to this home");
+
         if (home.UserPassword != PasswordHasher.CreateMd5(password)) throw new BadRequestException("Wrong user password");
         home.Users.Add(user);
         await _context.SaveChangesAsync();
+        return home;
     }
 
-    public async Task<SmartHome> UpdateHome(ApplicationUser user, String homeId, UpdateHomeDto dto)
+    public async Task<SmartHome> UpdateHome(SmartHome home, UpdateHomeDto dto)
     {
-        var home = _context.Homes.Where(h => h.OwnerId == user.Id && h.Id.ToString() == homeId).FirstOrDefault();
-        if (home == null) throw new ModelNotFoundException();
         home.Name = dto.Name ?? home.Name;
         home.Description = dto.Description ?? home.Description;
         home.InstallerPassword = dto.InstallerPassword ?? home.InstallerPassword;
@@ -115,10 +145,32 @@ public class HomeService : IHomeService
         return home;
     }
 
-    public Task DeleteHome(ApplicationUser user, String homeId)
+    public async Task RemoveUserFromHome(ApplicationUser user, string homeId)
     {
-        var home = _context.Homes.Where(h => h.OwnerId == user.Id && h.Id.ToString() == homeId).FirstOrDefault();
+        var home = await GetHomeById(homeId, null);
         if (home == null) throw new ModelNotFoundException();
+
+        var existingUser = home.Users.FirstOrDefault(u => u.Id == user.Id);
+        if (existingUser == null) throw new BadRequestException("User does not belong to this home");
+
+        home.Users.Remove(user);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task RemoveInstallerFromHome(ApplicationUser user, string homeId)
+    {
+        var home = await GetHomeById(homeId, null);
+        if (home == null) throw new ModelNotFoundException();
+
+        var existingInstaller = home.Installers.FirstOrDefault(u => u.Id == user.Id);
+        if (existingInstaller == null) throw new BadRequestException("Installer does not belong to this home");
+
+        home.Installers.Remove(user);
+        await _context.SaveChangesAsync();
+    }
+
+    public Task DeleteHome(SmartHome home)
+    {
         _context.Homes.Remove(home);
         return _context.SaveChangesAsync();
     }

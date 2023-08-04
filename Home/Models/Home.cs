@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using smart_home_server.Auth.Models;
+using smart_home_server.Processors.Models;
 using smart_home_server.Scenes.Models;
 using smart_home_server.SmartDevices.Models;
 
@@ -21,6 +22,11 @@ public class SmartHome
     public string Name { get; set; } = null!;
 
     public string OwnerId { get; set; } = null!;
+
+    public Guid? ProcessorId { get; set; }
+
+    [ForeignKey("ProcessorId")]
+    public Processor? Processor { get; set; } = null!;
 
     [ForeignKey("OwnerId")]
     [JsonIgnore]

@@ -8,68 +8,22 @@ namespace smart_home_server.Home.Services;
 
 public interface IRoomService
 {
-    Task<Room> CreateRoom(string userId, string homeId, string floorId, string name);
-    Task DeleteRoom(string userId, string homeId, string floorId, string roomId);
-    Task<List<Room>> GetFloorRooms(string userId, string homeId, string floorId, SearchOptionsQuery options);
+    Task<Room> CreateRoom(SmartHome home, string floorId, string name);
+    Task DeleteRoom(SmartHome home, string floorId, string roomId);
+    Task<List<Room>> GetFloorRooms(SmartHome home, string floorId, SearchOptionsQuery options);
     Task<Room?> GetRoomById(string floorId, string roomId);
-    Task<Room?> GetRoomInHome(string homeId, string roomId);
-    Task<bool> CheckIfRoomBelongToOwner(string userId, string roomId);
-    Task UpdateRoom(string userId, string homeId, string floorId, string roomId, string? name, bool? isFavorite);
+    Task<Room?> GetRoomInHome(SmartHome home, string roomId);
+    Task UpdateRoom(SmartHome home, string floorId, string roomId, string? name, bool? isFavorite);
 }
 
-class RoomService : IRoomService
+public class RoomService : IRoomService
 {
     private readonly AppDbContext _context;
     private readonly IFloorService _floorService;
-    private readonly IHomeService _homeService;
-    public RoomService(AppDbContext context, IFloorService floorService, IHomeService homeService)
+    public RoomService(AppDbContext context, IFloorService floorService)
     {
         _context = context;
         _floorService = floorService;
-        _homeService = homeService;
-    }
-
-    /// <summary>
-    /// Method <c>CheckFloorPermission</c> check if the current user owns the floor and return the floor object if permitted
-    /// Throw ModelNotFoundException if the floor was not found or not owned by users
-    /// </summary>
-    private async Task<Floor> CheckFloorPermission(string userId, string homeId, string floorId)
-    {
-        var home = await _homeService.GetHomeById(homeId, userId);
-        if (home == null) throw new ModelNotFoundException();
-
-        var floor = await _floorService.GetFloorById(homeId, floorId);
-        if (floor == null) throw new ModelNotFoundException();
-        return floor;
-    }
-
-    public async Task<bool> CheckIfRoomBelongToOwner(string userId, string roomId)
-    {
-        var roomQuery = from r in _context.Rooms
-                        join f in _context.Floors on r.FloorId equals f.Id
-                        join h in _context.Homes on f.HomeId equals h.Id
-                        join u in _context.Users on h.OwnerId equals u.Id
-                        where u.Id == userId
-                        where r.Id.ToString() == roomId
-                        select r;
-        var room = await roomQuery.FirstOrDefaultAsync();
-        return room != null;
-    }
-
-    public async Task<bool> CheckIfRoomBelongToInstaller(string userId, string roomId)
-    {
-        var roomQuery = from r in _context.Rooms
-                        join f in _context.Floors on r.FloorId equals f.Id
-                        join h in _context.Homes on f.HomeId equals h.Id
-                        join u in _context.Users on h.OwnerId equals u.Id
-                        where (from installer in h.Installers
-                               where u.Id == userId
-                               select installer
-                        ).Any() == true
-                        where r.Id == new Guid(roomId)
-                        select r;
-        var room = await roomQuery.FirstOrDefaultAsync();
-        return room != null;
     }
 
     public async Task<Room?> GetRoomById(string floorId, string roomId)
@@ -80,19 +34,20 @@ class RoomService : IRoomService
         return room;
     }
 
-    public async Task<Room?> GetRoomInHome(string homeId, string roomId)
+    public async Task<Room?> GetRoomInHome(SmartHome home, string roomId)
     {
         var roomQuery = from r in _context.Rooms
                         join f in _context.Floors on r.FloorId equals f.Id
                         join h in _context.Homes on f.HomeId equals h.Id
-                        where (r.Id.ToString() == roomId && h.Id.ToString() == homeId)
+                        where (r.Id.ToString() == roomId && h.Id == home.Id)
                         select r;
         return (await roomQuery.FirstOrDefaultAsync());
     }
 
-    public async Task<List<Room>> GetFloorRooms(string userId, string homeId, string floorId, SearchOptionsQuery options)
+    public async Task<List<Room>> GetFloorRooms(SmartHome home, string floorId, SearchOptionsQuery options)
     {
-        var floor = await CheckFloorPermission(userId, homeId, floorId);
+        var floor = await _floorService.GetFloorById(home, floorId);
+        if (floor == null) throw new ModelNotFoundException($"floor id {floorId} does not exist");
 
         var page = options.Page ?? 1;
         var recordPerPage = options.RecordPerPage ?? 10;
@@ -102,11 +57,12 @@ class RoomService : IRoomService
         return rooms;
     }
 
-    public async Task<Room> CreateRoom(string userId, string homeId, string floorId, string name)
+    public async Task<Room> CreateRoom(SmartHome home, string floorId, string name)
     {
-        var floor = await CheckFloorPermission(userId, homeId, floorId);
+        var floor = await _floorService.GetFloorById(home, floorId);
+        if (floor == null) throw new ModelNotFoundException($"floor id {floorId} does not exist");
 
-        var searchRoom = await _context.Rooms.Where(r => r.FloorId.ToString() == floorId && r.Name == name).FirstOrDefaultAsync();
+        var searchRoom = await _context.Rooms.Where(r => r.FloorId == floor.Id && r.Name == name).FirstOrDefaultAsync();
         if (searchRoom != null) throw new BadRequestException("Room name already exists in the same home");
         var room = new Room() { Name = name, Floor = floor };
         _context.Rooms.Add(room);
@@ -114,12 +70,14 @@ class RoomService : IRoomService
         return room;
     }
 
-    public async Task UpdateRoom(string userId, string homeId, string floorId, string roomId, string? name, bool? isFavorite)
+    public async Task UpdateRoom(SmartHome home, string floorId, string roomId, string? name, bool? isFavorite)
     {
-        var floor = await CheckFloorPermission(userId, homeId, floorId);
+        var floor = await _floorService.GetFloorById(home, floorId);
+        if (floor == null) throw new ModelNotFoundException($"floor id {floorId} does not exist");
 
-        var searchRoom = await _context.Rooms.Where(r => r.FloorId.ToString() == floorId && r.Name == name).FirstOrDefaultAsync();
+        var searchRoom = await _context.Rooms.Where(r => r.FloorId == floor.Id && r.Name == name).FirstOrDefaultAsync();
         if (searchRoom != null && searchRoom.Id.ToString() != roomId) throw new BadRequestException("Room name already exists in the same home");
+
         var room = await GetRoomById(floorId, roomId);
         if (room == null) throw new ModelNotFoundException();
         if (name != null) room.Name = name;
@@ -127,12 +85,14 @@ class RoomService : IRoomService
         await _context.SaveChangesAsync();
     }
 
-    public async Task DeleteRoom(string userId, string homeId, string floorId, string roomId)
+    public async Task DeleteRoom(SmartHome home, string floorId, string roomId)
     {
-        var floor = await CheckFloorPermission(userId, homeId, floorId);
+        var floor = await _floorService.GetFloorById(home, floorId);
+        if (floor == null) throw new ModelNotFoundException($"floor id {floorId} does not exist");
 
         var room = await GetRoomById(floor.Id.ToString(), roomId);
         if (room == null) throw new ModelNotFoundException();
+
         _context.Rooms.Remove(room);
         await _context.SaveChangesAsync();
     }

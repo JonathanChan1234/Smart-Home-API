@@ -20,17 +20,19 @@ using smart_home_server.Home.Authorization;
 using smart_home_server.SmartDevices.SubDevices.Lights.Service;
 using smart_home_server.SmartDevices.Services;
 using smart_home_server.SmartDevices.SubDevices.Shades.Services;
+using smart_home_server.Processors.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseKestrel(
-    o =>
-    {
-        o.ListenAnyIP(5181);
-        o.ListenAnyIP(1883, l => l.UseMqtt());
-        o.ListenAnyIP(7025, l => l.UseHttps());
-    }
-);
+builder.WebHost
+    .UseKestrel(
+        o =>
+            {
+                o.ListenAnyIP(5181);
+                o.ListenAnyIP(1883, l => l.UseMqtt());
+                o.ListenAnyIP(7025, l => l.UseHttps());
+            }
+    );
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
@@ -83,6 +85,7 @@ builder.Services.AddScoped<IShadeActionService, ShadeActionService>();
 builder.Services.AddScoped<ISmartDeviceService, SmartDeviceService>();
 builder.Services.AddScoped<ISmartLightService, SmartLightService>();
 builder.Services.AddScoped<ISmartShadeService, SmartShadeService>();
+builder.Services.AddScoped<IProcessorService, ProcessorService>();
 
 // Add services to the container.
 builder.Services.AddControllers();

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using smart_home_server.Auth.Exceptions;
 using smart_home_server.Auth.Models;
 using smart_home_server.Auth.Services;
+using smart_home_server.Exceptions;
+using smart_home_server.Home.Authorization;
 using smart_home_server.Home.Models;
 using smart_home_server.Home.ResourceModels;
 using smart_home_server.Home.Services;
@@ -13,11 +15,27 @@ public class HomeController : ControllerBase
 {
     private readonly IHomeService _homeService;
     private readonly IAuthService _authService;
+    private readonly IAuthorizationService _authorizationService;
 
-    public HomeController(IHomeService homeService, IAuthService authService)
+    public HomeController(
+        IHomeService homeService,
+        IAuthService authService,
+        IAuthorizationService authorizationService)
     {
         _homeService = homeService;
         _authService = authService;
+        _authorizationService = authorizationService;
+    }
+
+    private async Task<SmartHome> GetHomeByParams(string homeId, HomeOperationRequirement right)
+    {
+        var home = await _homeService.GetHomeById(homeId, null);
+        if (home == null)
+            throw new ModelNotFoundException($"Cannot find home {homeId}");
+
+        if (!(await _authorizationService.AuthorizeAsync(User, home, right)).Succeeded)
+            throw new ForbiddenException($"No permisson for home {homeId}");
+        return home;
     }
 
     private async Task<ApplicationUser> GetAuthUser()
@@ -28,7 +46,7 @@ public class HomeController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet]
+    [HttpGet("owner")]
     public async Task<ActionResult<List<SmartHome>>> GetOwnerHome([FromQuery] SearchOptionsQuery options)
     {
         var home = await _homeService.GetOwnerHome((await GetAuthUser()), options);
@@ -36,7 +54,23 @@ public class HomeController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("{id}/installers")]
+    [HttpGet("user")]
+    public async Task<ActionResult<List<SmartHome>>> GetUserHome([FromQuery] SearchOptionsQuery options)
+    {
+        var home = await _homeService.GetUserHome((await GetAuthUser()), options);
+        return home;
+    }
+
+    [Authorize]
+    [HttpGet("installer")]
+    public async Task<ActionResult<List<SmartHome>>> GetInstallerHome([FromQuery] SearchOptionsQuery options)
+    {
+        var home = await _homeService.GetInstallerHome((await GetAuthUser()), options);
+        return home;
+    }
+
+    [Authorize]
+    [HttpGet("{id}/installer")]
     public async Task<ActionResult<List<ApplicationUser>>> GetHomeInstallers(string id)
     {
         var installers = await _homeService.GetHomeInstallers((await GetAuthUser()), id);
@@ -44,7 +78,7 @@ public class HomeController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("{id}/users")]
+    [HttpGet("{id}/user")]
     public async Task<ActionResult<List<ApplicationUser>>> GetHomeUsers(string id)
     {
         var users = await _homeService.GetHomeUsers((await GetAuthUser()), id);
@@ -61,25 +95,44 @@ public class HomeController : ControllerBase
 
     [Authorize]
     [HttpPost("{id}/installer")]
-    public async Task<IActionResult> PostInstaller(string id, [FromBody] PasswordDto dto)
+    public async Task<ActionResult<SmartHome>> PostInstaller(string id, [FromBody] PasswordDto dto)
     {
-        await _homeService.AddInstallerToHome((await GetAuthUser()), id, dto.Password);
-        return CreatedAtAction(nameof(PostInstaller), new { id = id });
+        var home = await _homeService.AddInstallerToHome((await GetAuthUser()), id, dto.Password);
+        return CreatedAtAction(nameof(PostInstaller), new { id = id }, home);
     }
 
     [Authorize]
-    [HttpPost("{id}/users")]
-    public async Task<IActionResult> PostUser(string id, [FromBody] PasswordDto dto)
+    [HttpPost("{id}/user")]
+    public async Task<ActionResult<SmartHome>> PostUser(string id, [FromBody] PasswordDto dto)
     {
-        await _homeService.AddUserToHome((await GetAuthUser()), id, dto.Password);
-        return CreatedAtAction(nameof(PostInstaller), new { id = id });
+        var home = await _homeService.AddUserToHome((await GetAuthUser()), id, dto.Password);
+        return CreatedAtAction(nameof(PostUser), new
+        {
+            id = id
+        }, home);
     }
 
     [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateHome(string id, [FromBody] UpdateHomeDto dto)
     {
-        await _homeService.UpdateHome((await GetAuthUser()), id, dto);
+        await _homeService.UpdateHome(await GetHomeByParams(id, HomeOperation.Owner), dto);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpDelete("{id}/user")]
+    public async Task<IActionResult> DeleteHomeUser(string id)
+    {
+        await _homeService.RemoveUserFromHome(await GetAuthUser(), id);
+        return NoContent();
+    }
+
+    [Authorize]
+    [HttpDelete("{id}/installer")]
+    public async Task<IActionResult> DeleteHomeInstaller(string id)
+    {
+        await _homeService.RemoveInstallerFromHome(await GetAuthUser(), id);
         return NoContent();
     }
 
@@ -87,7 +140,7 @@ public class HomeController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteHome(string id)
     {
-        await _homeService.DeleteHome((await GetAuthUser()), id);
+        await _homeService.DeleteHome(await GetHomeByParams(id, HomeOperation.Owner));
         return NoContent();
     }
 }
