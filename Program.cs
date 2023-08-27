@@ -23,6 +23,7 @@ using smart_home_server.SmartDevices.SubDevices.Shades.Services;
 using smart_home_server.Processors.Service;
 
 var builder = WebApplication.CreateBuilder(args);
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 builder.WebHost
     .UseKestrel(
@@ -33,7 +34,13 @@ builder.WebHost
                 o.ListenAnyIP(7025, l => l.UseHttps());
             }
     );
+//    .UseUrls("http://localhost:5181", "http://192.168.80.213:5181");
+//    .UseIISIntegration();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(MyAllowSpecificOrigins, policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
@@ -107,6 +114,7 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseCors(MyAllowSpecificOrigins);
 app.UseRouting();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

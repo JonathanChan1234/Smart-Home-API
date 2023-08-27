@@ -21,6 +21,7 @@ public class Processor
 
     public bool OnlineStatus { get; set; }
 
+    [JsonIgnore]
     public string Password { get; set; } = null!;
 
     public DateTime AddedAt { get; set; }

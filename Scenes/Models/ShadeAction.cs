@@ -5,8 +5,8 @@ namespace smart_home_server.Scenes.Models;
 public enum ShadeActionType
 {
     raise,
-    lower,
     na,
+    lower,
 }
 
 public class ShadeAction

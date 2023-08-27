@@ -47,7 +47,7 @@ public class MqttProcessorController : MqttBaseController
         if (home.ProcessorId != processor.Id) throw new BadRequestException($"This processor does not have right to access this home");
     }
 
-    [MqttRoute("")]
+    [MqttRoute("status")]
     public async Task UpdateProcessorStatus(
         string homeId,
         [FromPayload] UpdateProcessorStatusDto dto)
