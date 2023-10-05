@@ -12,7 +12,7 @@ namespace smart_home_server.Scenes.Services;
 public interface ILightActionService
 {
     Task<SceneAction> CreateLightAction(SmartHome home, Scene scene, string deviceId, LightProperties properties);
-    Task EditLightAction(SmartHome home, Scene scene, String actionId, LightProperties properties);
+    Task EditLightAction(SmartHome home, Scene scene, string actionId, LightProperties properties);
 }
 
 public class LightActionService : ILightActionService
@@ -48,7 +48,7 @@ public class LightActionService : ILightActionService
         {
             Device = light,
             Scene = scene,
-            Action = lightAction.ToDict<LightProperties>(),
+            Action = lightAction.ToDict(),
             Description = ""
         };
 
@@ -61,18 +61,18 @@ public class LightActionService : ILightActionService
     public async Task EditLightAction(SmartHome home, Scene scene, string actionId, LightProperties lightAction)
     {
         // Check if the action id exists
-        var action = await _context.SceneActions.FirstOrDefaultAsync(a => a.Id.ToString() == actionId);
-        if (action == null) throw new ModelNotFoundException($"Action (id: {actionId}) does not exist");
+        var action = await _sceneActionService.FindSceneActionById(scene.Id.ToString(), actionId)
+            ?? throw new ModelNotFoundException($"Action (id: {actionId}) does not exist");
 
         // Check if the light still exists. If yes, check its dimmable compatibility
-        var light = await _lightService.FindLightById(home, action.DeviceId.ToString());
-        if (light == null) throw new BadRequestException($"Light (id: {action.DeviceId.ToString()}) does not exist");
+        var light = await _lightService.FindLightById(home, action.DeviceId.ToString())
+            ?? throw new BadRequestException($"Light (id: {action.DeviceId}) does not exist");
 
         var capabilties = light.Capabilities.ToObject<LightCapabilities>();
         if (!CheckLightCapabilities(lightAction, capabilties))
             throw new BadRequestException("Please check the light's capabilties. The light action contains invalid properties");
 
-        action.Action = lightAction.ToDict<LightProperties>();
+        action.Action = lightAction.ToDict();
         await _context.SaveChangesAsync();
     }
 
@@ -81,7 +81,8 @@ public class LightActionService : ILightActionService
         // For non-dimmable light, brightness can either be null or 0/100
         if (!capabilities.Dimmable
             && properties.Brightness != null
-            && (properties.Brightness != 0 && properties.Brightness != 100))
+            && properties.Brightness != 0
+            && properties.Brightness != 100)
             return false;
 
         // For light not supporting color temperature change, color temperature must be null

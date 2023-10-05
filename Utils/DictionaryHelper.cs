@@ -8,7 +8,6 @@ public static class DictionaryHelper
         where T : class, new()
     {
         var obj = new T();
-        var objType = obj.GetType();
         foreach (var pair in dict)
         {
             var property = obj.GetType().GetProperty(pair.Key.FirstCharToUppercase());

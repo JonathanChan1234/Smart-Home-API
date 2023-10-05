@@ -74,7 +74,7 @@ public class AuthService : IAuthService
         var identityUser = await _userManager.FindByIdAsync(existingRefreshToken.UserId);
         if (identityUser == null) throw new BadRequestException("User not found");
 
-        return (await CreateToken(identityUser));
+        return await CreateToken(identityUser);
     }
 
     public async Task Logout(string jti, DateTime expireOn, string refreshToken)

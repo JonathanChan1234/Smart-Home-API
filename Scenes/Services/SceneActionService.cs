@@ -19,15 +19,12 @@ public interface ISceneActionService
 public class SceneActionService : ISceneActionService
 {
     private readonly AppDbContext _context;
-    private readonly ISceneService _sceneService;
 
     public SceneActionService(
-        AppDbContext context,
-        ISceneService sceneService
+        AppDbContext context
     )
     {
         _context = context;
-        _sceneService = sceneService;
     }
 
     public async Task<List<SceneAction>> FindSceneActions(string sceneId)

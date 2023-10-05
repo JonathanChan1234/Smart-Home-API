@@ -12,7 +12,9 @@ public enum MainCategory
     [Description("light")]
     Light,
     [Description("shade")]
-    Shade
+    Shade,
+    [Description("ac")]
+    AirConditioner
 }
 
 public enum SubCategory
@@ -25,7 +27,9 @@ public enum SubCategory
     [Description("motor-shade")]
     MotorShade,
     [Description("roller-shade")]
-    RollerShade
+    RollerShade,
+    [Description("air-conditioner")]
+    AirConditioner
 }
 
 [Table("SmartDevices")]

@@ -1,3 +1,5 @@
+
+using Microsoft.AspNetCore.Http.HttpResults;
 using MQTTnet.AspNetCore.Routing;
 using MQTTnet.AspNetCore.Routing.Attributes;
 using smart_home_server.Exceptions;
@@ -5,29 +7,29 @@ using smart_home_server.Home.Models;
 using smart_home_server.Home.Services;
 using smart_home_server.Mqtt.Client.Services;
 using smart_home_server.SmartDevices.ResourceModels;
-using smart_home_server.SmartDevices.SubDevices.Lights.Models;
-using smart_home_server.SmartDevices.SubDevices.Lights.Service;
+using smart_home_server.SmartDevices.SubDevices.AirConditioner.Models;
+using smart_home_server.SmartDevices.SubDevices.AirConditioner.Service;
 
 namespace smart_home_server.Mqtt.Publish.Controller;
 
 [MqttController]
-[MqttRoute("home/{homeId}/device/light")]
-public class MqttLightController : MqttBaseController
+[MqttRoute("home/{homeId}/device/airConditioner")]
+public class MqttAirConditionerController : MqttBaseController
 {
-    private readonly ILogger<MqttLightController> _logger;
-    private readonly ISmartLightService _lightService;
+    private readonly ILogger<MqttAirConditionerController> _logger;
+    private readonly IAirConditionerService _airConditionerService;
     private readonly IHomeService _homeService;
     private readonly IMqttClientService _mqttClientService;
 
-    public MqttLightController(
-        ILogger<MqttLightController> logger,
-        ISmartLightService lightService,
+    public MqttAirConditionerController(
+        ILogger<MqttAirConditionerController> logger,
+        IAirConditionerService airConditionerService,
         IHomeService homeService,
         IMqttClientService mqttClientService
         )
     {
         _logger = logger;
-        _lightService = lightService;
+        _airConditionerService = airConditionerService;
         _homeService = homeService;
         _mqttClientService = mqttClientService;
     }
@@ -40,16 +42,18 @@ public class MqttLightController : MqttBaseController
     }
 
     [MqttRoute("{deviceId}/status")]
-    public async Task UpdateLightStatus(
+    public async Task UpdateAirConditionerStatus(
         string homeId,
         string deviceId,
-        [FromPayload] UpdateDeviceStatusDto<LightProperties> dto)
+        [FromPayload] UpdateDeviceStatusDto<AirConditionerProperties> dto)
     {
         try
         {
             var home = await AuthenticateUser(homeId);
 
-            await _lightService.UpdateLightStatus(home, deviceId, dto.LastUpdatedAt, dto.Properties, dto.OnlineStatus);
+            var ac = await _airConditionerService.FindAirConditionerById(home, deviceId)
+                ?? throw new BadRequestException($"ac (id: {deviceId}) does not exist");
+            await _airConditionerService.UpdateAirConditionerStatus(home, deviceId, dto.LastUpdatedAt, dto.Properties, dto.OnlineStatus);
             await Ok();
         }
         catch (Exception e)
@@ -60,18 +64,18 @@ public class MqttLightController : MqttBaseController
     }
 
     [MqttRoute("{deviceId}/control")]
-    public async Task HandleLightControl(
+    public async Task HandleAirConditionerControl(
         string homeId,
         string deviceId,
-        [FromPayload] UpdateDeviceStatusDto<LightProperties> dto)
+        [FromPayload] UpdateDeviceStatusDto<AirConditionerProperties> dto)
     {
         try
         {
             if (dto is null) throw new BadRequestException("Invalid payload");
             var home = await AuthenticateUser(homeId);
 
-            var light = await _lightService.FindLightById(home, deviceId)
-                ?? throw new BadRequestException("control command date expired");
+            var ac = await _airConditionerService.FindAirConditionerById(home, deviceId)
+                ?? throw new BadRequestException($"ac (id: {deviceId}) does not exist");
             await Ok();
         }
         catch (Exception e)

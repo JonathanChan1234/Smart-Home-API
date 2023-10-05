@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.IIS.Core;
 using Microsoft.EntityFrameworkCore;
 using smart_home_server.Db;
 using smart_home_server.Exceptions;
@@ -36,9 +37,7 @@ public class SmartLightService : ISmartLightService
                 d => d.MainCategory == MainCategory.Light &&
                 d.Id.ToString() == deviceId &&
                 d.HomeId == home.Id)
-            .FirstOrDefaultAsync();
-        if (light == null)
-            throw new ModelNotFoundException($"light (id: {deviceId}) does not exist");
+            .FirstOrDefaultAsync() ?? throw new ModelNotFoundException($"light (id: {deviceId}) does not exist");
         return light;
     }
 
@@ -88,8 +87,9 @@ public class SmartLightService : ISmartLightService
     )
     {
         var light = await FindLightById(home, deviceId);
+        if (light.StatusLastUpdatedAt > lastUpdatedAt) throw new BadRequestException("Update light status failed. Reason: The status is not up to date");
         light.StatusLastUpdatedAt = lastUpdatedAt;
-        if (properties != null) light.Properties = light.Properties.UpdateDict<LightProperties>(properties);
+        if (properties != null) light.Properties = light.Properties.UpdateDict(properties);
         if (onlineStatus != null) light.OnlineStatus = (bool)onlineStatus;
         await _context.SaveChangesAsync();
     }

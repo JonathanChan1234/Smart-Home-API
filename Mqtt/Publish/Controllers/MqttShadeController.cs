@@ -35,32 +35,10 @@ public class MqttShadeController : MqttBaseController
         _mqttClientService = mqttClientService;
     }
 
-    private bool ValidatePayload<T>(T dto)
+    private async Task<SmartHome> AuthenticateUser(string homeId)
     {
-        if (dto == null) return false;
-        ValidationContext context = new ValidationContext(dto);
-        List<ValidationResult> validationResults = new List<ValidationResult>();
-        return Validator.TryValidateObject(dto, context, validationResults);
-    }
-
-    private async Task ValidateClient(string homeId)
-    {
-        var clientId = MqttContext.ClientId;
-        var validId = int.TryParse(clientId, out int cid);
-        if (!validId) throw new BadRequestException($"invalid client id {clientId}");
-
-        var client = await _mqttClientService.FindMqttClientById(cid);
-        // cannot find the mqtt client id
-        if (client == null) throw new BadRequestException($"client id {clientId} does not exist");
-
-        // incorrect topic
-        if (homeId != client.HomeId.ToString()) throw new BadRequestException($"client does not have right to access this home");
-    }
-
-    private async Task<SmartHome> GetHomeFromParams(string homeId)
-    {
-        var home = await _homeService.GetHomeById(homeId, null);
-        if (home == null) throw new ModelNotFoundException($"home (id: {homeId}) does not exist");
+        await MqttAuthHelper.ValidateClient(_mqttClientService, MqttContext.ClientId, homeId);
+        var home = await MqttAuthHelper.GetHomeFromParams(_homeService, homeId);
         return home;
     }
 
@@ -72,9 +50,8 @@ public class MqttShadeController : MqttBaseController
     {
         try
         {
-            await ValidateClient(homeId);
+            var home = await AuthenticateUser(homeId);
 
-            var home = await GetHomeFromParams(homeId);
             await _shadeService.UpdateShadeStatus(home, deviceId, dto.LastUpdatedAt, dto.Properties, dto.OnlineStatus);
             await Ok();
         }
@@ -93,11 +70,9 @@ public class MqttShadeController : MqttBaseController
     {
         try
         {
-            await ValidateClient(homeId);
-            var home = await GetHomeFromParams(homeId);
-            var shade = await _shadeService.FindShadeById(home, deviceId);
-            if (shade == null || shade?.StatusLastUpdatedAt > dto.LastUpdatedAt)
-                throw new BadRequestException("control command date expired");
+            var home = await AuthenticateUser(homeId);
+            var shade = await _shadeService.FindShadeById(home, deviceId)
+                ?? throw new BadRequestException("control command date expired");
             await Ok();
         }
         catch (Exception e)

@@ -21,6 +21,7 @@ using smart_home_server.SmartDevices.SubDevices.Lights.Service;
 using smart_home_server.SmartDevices.Services;
 using smart_home_server.SmartDevices.SubDevices.Shades.Services;
 using smart_home_server.Processors.Service;
+using smart_home_server.SmartDevices.SubDevices.AirConditioner.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -29,13 +30,11 @@ builder.WebHost
     .UseKestrel(
         o =>
             {
-                o.ListenAnyIP(5181);
                 o.ListenAnyIP(1883, l => l.UseMqtt());
                 o.ListenAnyIP(7025, l => l.UseHttps());
+                o.ListenAnyIP(5181);
             }
     );
-//    .UseUrls("http://localhost:5181", "http://192.168.80.213:5181");
-//    .UseIISIntegration();
 
 builder.Services.AddCors(options =>
 {
@@ -89,10 +88,12 @@ builder.Services.AddScoped<ISceneService, SceneService>();
 builder.Services.AddScoped<ISceneActionService, SceneActionService>();
 builder.Services.AddScoped<ILightActionService, LightActionService>();
 builder.Services.AddScoped<IShadeActionService, ShadeActionService>();
+builder.Services.AddScoped<IAirConditionerActionService, AirConditionerActionService>();
 builder.Services.AddScoped<ISmartDeviceService, SmartDeviceService>();
 builder.Services.AddScoped<ISmartLightService, SmartLightService>();
 builder.Services.AddScoped<ISmartShadeService, SmartShadeService>();
 builder.Services.AddScoped<IProcessorService, ProcessorService>();
+builder.Services.AddScoped<IAirConditionerService, AirConditionerService>();
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -116,6 +117,15 @@ var app = builder.Build();
 
 app.UseCors(MyAllowSpecificOrigins);
 app.UseRouting();
+app.MapConnectionHandler<MqttConnectionHandler>(
+    "/mqtt",
+    httpConenctionDispatcherOptions => httpConenctionDispatcherOptions.WebSockets.SubProtocolSelector =
+        protocolList => protocolList.FirstOrDefault() ?? String.Empty);
+app.UseMqttServer(server =>
+{
+    server.WithAuthentication(app.Services);
+    server.WithAttributeRouting(app.Services, allowUnmatchedRoutes: false);
+});
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -132,17 +142,8 @@ app.UseWhen(httpContext =>
     && !httpContext.Request.Path.StartsWithSegments("/api/v1/Auth/RefreshToken"),
     appBuilder => appBuilder.UseJwtBlackListMiddleware());
 
+
 app.MapControllers();
 app.UseExceptionHandler(ExceptionHandler.Handler());
-
-app.MapConnectionHandler<MqttConnectionHandler>(
-    "/mqtt",
-    httpConenctionDispatcherOptions => httpConenctionDispatcherOptions.WebSockets.SubProtocolSelector =
-        protocolList => protocolList.FirstOrDefault() ?? String.Empty);
-app.UseMqttServer(server =>
-{
-    server.WithAuthentication(app.Services);
-    server.WithAttributeRouting(app.Services, allowUnmatchedRoutes: false);
-});
 
 app.Run();

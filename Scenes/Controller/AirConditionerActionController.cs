@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using smart_home_server.Exceptions;
@@ -7,32 +8,32 @@ using smart_home_server.Home.Services;
 using smart_home_server.Scenes.Models;
 using smart_home_server.Scenes.ResourceModels;
 using smart_home_server.Scenes.Services;
-using smart_home_server.SmartDevices.SubDevices.Lights.Models;
+using smart_home_server.SmartDevices.SubDevices.AirConditioner.Models;
 
 namespace smart_home_server.Scenes.Controller;
 
 [ApiController]
-[Route("api/v1/home/{homeId}/scene/{sceneId}/action/light")]
-public class LightActionController : ControllerBase
+[Route("api/v1/home/{homeId}/scene/{sceneId}/action/ac")]
+public class AirConditionerActionController : ControllerBase
 {
-    private readonly ILogger<LightActionController> _logger;
+    private readonly ILogger<AirConditionerActionController> _logger;
     private readonly IHomeService _homeService;
     private readonly ISceneService _sceneService;
     private readonly IAuthorizationService _authorizationService;
-    private readonly ILightActionService _lightActionService;
+    private readonly IAirConditionerActionService _airConditionerActionService;
 
-    public LightActionController(
-        ILogger<LightActionController> logger,
+    public AirConditionerActionController(
+        ILogger<AirConditionerActionController> logger,
         IHomeService homeService,
         ISceneService sceneService,
         IAuthorizationService authorizationService,
-        ILightActionService lightActionService
+        IAirConditionerActionService airConditionerActionService
     )
     {
         _logger = logger;
         _homeService = homeService;
         _sceneService = sceneService;
-        _lightActionService = lightActionService;
+        _airConditionerActionService = airConditionerActionService;
         _authorizationService = authorizationService;
     }
 
@@ -52,29 +53,29 @@ public class LightActionController : ControllerBase
 
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> PostLightAction(
+    public async Task<IActionResult> PostAirConditionerAction(
         string homeId,
         string sceneId,
-        [FromBody] DeviceActionDto<LightProperties> dto
+        [FromBody] DeviceActionDto<AirConditionerProperties> dto
     )
     {
         var (home, scene) = await GetHomeScene(homeId, sceneId);
 
-        var action = await _lightActionService.CreateLightAction(home, scene, dto.DeviceId, dto.DeviceProperties);
-        return CreatedAtAction(nameof(PostLightAction), new { id = action.Id }, action);
+        var action = await _airConditionerActionService.CreateAirConditionerAction(home, scene, dto.DeviceId, dto.DeviceProperties);
+        return CreatedAtAction(nameof(PostAirConditionerAction), new { id = action.Id }, action);
     }
 
     [Authorize]
     [HttpPut("{actionId}")]
-    public async Task<IActionResult> PutLightAction(
+    public async Task<IActionResult> PutAirConditionerAction(
         string homeId,
         string sceneId,
         string actionId,
-        [FromBody] DeviceActionDto<LightProperties> dto
+        [FromBody] DeviceActionDto<AirConditionerProperties> dto
     )
     {
         var (home, scene) = await GetHomeScene(homeId, sceneId);
-        await _lightActionService.EditLightAction(home, scene, actionId, dto.DeviceProperties);
+        await _airConditionerActionService.EditAirConditionerAction(home, scene, actionId, dto.DeviceProperties);
         return NoContent();
     }
 }

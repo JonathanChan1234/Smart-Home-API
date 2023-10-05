@@ -87,6 +87,7 @@ public class SmartShadeService : ISmartShadeService
         bool? onlineStatus = null)
     {
         var shade = await FindShadeById(home, deviceId);
+        if (shade.StatusLastUpdatedAt > lastUpdatedAt) throw new BadRequestException("Update AC status failed. Reason: The status is not up to date");
         shade.StatusLastUpdatedAt = lastUpdatedAt;
         if (properties != null) shade.Properties = shade.Properties.UpdateDict<ShadeProperties>(properties);
         if (onlineStatus != null) shade.OnlineStatus = (bool)onlineStatus;
