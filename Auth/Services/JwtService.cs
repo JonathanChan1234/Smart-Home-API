@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.IdentityModel.Tokens;
 using smart_home_server.Auth.Exceptions;
 using smart_home_server.Auth.Models;
@@ -12,10 +13,21 @@ namespace smart_home_server.Auth.Services;
 
 public enum Role { master, installer, user }
 
+public class JwtNotExpiredException : Exception
+{
+    public JwtNotExpiredException()
+    {
+    }
+
+    public JwtNotExpiredException(string? message) : base(message)
+    {
+    }
+}
+
 public class JwtService : IJwtService
 {
     public static string USER_ID = "userId";
-    private const int EXPIRATION_TIMEOUT = 5;
+    private const int EXPIRATION_TIMEOUT = 30;
     private readonly IConfiguration _configuration;
     private readonly AppDbContext _context;
     private readonly TokenValidationParameters _validationParameters;
@@ -48,24 +60,17 @@ public class JwtService : IJwtService
     {
         var jwtTokenHandler = new JwtSecurityTokenHandler();
         // 1. Check if the access token is valid jwt
-        try
-        {
-            var jwtSecurityToken = jwtTokenHandler.ReadJwtToken(accessToken);
-            if (!jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                throw new BadRequestException("Wrong security algorithm");
+        var jwtSecurityToken = jwtTokenHandler.ReadJwtToken(accessToken);
+        if (!jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            throw new BadRequestException("Wrong security algorithm");
 
-            // 3. Check if the accessToken expires or not
-            var exp = jwtSecurityToken?.Payload.Exp;
-            if (exp == null) throw new BadRequestException("Missing expire time");
-            if (DateUtils.UnixTimeStampToDateTime((double)exp) > DateTime.UtcNow.AddHours(8))
-                throw new BadRequestException("Access token not expired");
+        // 3. Check if the accessToken expires or not
+        var exp = jwtSecurityToken?.Payload.Exp;
+        if (exp == null) throw new BadRequestException("Missing expire time");
+        if (DateUtils.UnixTimeStampToDateTime((double)exp) > DateTime.UtcNow.AddHours(8))
+            throw new JwtNotExpiredException("Access token not expired");
 
-            return jwtSecurityToken;
-        }
-        catch
-        {
-            throw new BadRequestException("Invalid JWT");
-        }
+        return jwtSecurityToken;
     }
 
     public JwtSecurityToken CreateAccessToken(String userId, String username)

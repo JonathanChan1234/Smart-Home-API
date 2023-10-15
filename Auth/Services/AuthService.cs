@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Server.IIS.Core;
 using smart_home_server.Auth.Exceptions;
 using smart_home_server.Auth.Models;
 using smart_home_server.Auth.ResourceModels;
@@ -48,33 +49,38 @@ public class AuthService : IAuthService
         }, user.Password);
         if (!result.Succeeded) throw new Exception(String.Join(",", result.Errors.Select(error => error.Description)));
 
-        var identityUser = await _userManager.FindByNameAsync(user.UserName);
-        if (identityUser == null) throw new UserNotFoundException();
-
-        return (await CreateToken(identityUser));
+        var identityUser = await _userManager.FindByNameAsync(user.UserName)
+            ?? throw new UserNotFoundException();
+        return await CreateToken(identityUser);
     }
 
     public async Task<TokenResponse> Login(AuthenticationRequest user)
     {
-        var identityUser = await _userManager.FindByNameAsync(user.UserName);
-        if (identityUser == null) throw new UserNotFoundException();
+        var identityUser = await _userManager.FindByNameAsync(user.UserName)
+            ?? throw new UserNotFoundException();
         if (!await _userManager.CheckPasswordAsync(identityUser, user.Password)) throw new BadAuthenticationException();
 
-        return (await CreateToken(identityUser));
+        return await CreateToken(identityUser);
     }
 
     public async Task<TokenResponse> RefreshToken(string accessToken, string refreshToken)
     {
-        var jwtSecurityToken = _jwtService.CheckIfJwtIsValidForRenew(accessToken);
-        if (jwtSecurityToken == null) throw new BadRequestException("JWT missing claims");
+        try
+        {
+            var jwtSecurityToken = _jwtService.CheckIfJwtIsValidForRenew(accessToken)
+                ?? throw new BadRequestException("JWT missing claims");
+            var jti = jwtSecurityToken.Id;
+            var existingRefreshToken = await _refreshTokenService.UpdateRefreshToken(refreshToken, jti);
 
-        var jti = jwtSecurityToken.Id;
-        var existingRefreshToken = await _refreshTokenService.UpdateRefreshToken(refreshToken, jti);
-
-        var identityUser = await _userManager.FindByIdAsync(existingRefreshToken.UserId);
-        if (identityUser == null) throw new BadRequestException("User not found");
-
-        return await CreateToken(identityUser);
+            var identityUser = await _userManager.FindByIdAsync(existingRefreshToken.UserId)
+                ?? throw new BadRequestException("User not found");
+            return await CreateToken(identityUser);
+        }
+        catch (JwtNotExpiredException)
+        {
+            // if the token is not expired, return the original token to the user
+            return new TokenResponse(accessToken, refreshToken);
+        }
     }
 
     public async Task Logout(string jti, DateTime expireOn, string refreshToken)
